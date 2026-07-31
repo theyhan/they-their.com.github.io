@@ -26,31 +26,76 @@ import {
 } from '../src/lib/dashboard/index.js';
 
 const asOf = new Date('2026-07-31T00:00:00Z');
-const input = await loadFixtureDashboard({ asOf, periodDays: 30, seed: 'demo' });
-const model = buildDashboard(input);
-const rows = buildAllContentRows(input);
+
+/** FR-003 offers 7, 30 and 90 days. Rendering all three shows how the states change with sample size. */
+const PERIODS = [7, 30, 90] as const;
+
+// Declared before the render loop below: function declarations hoist, but the constants they close
+// over do not initialise until this point, and the loop runs at module top level.
+const REPO_TREE = 'https://github.com/theyhan/they-their.com.github.io/tree/feat/snsight-foundation/snsight';
+const REPO_BLOB = 'https://github.com/theyhan/they-their.com.github.io/blob/feat/snsight-foundation/snsight';
+
+/**
+ * Reassigned per period. The HTML helpers read it to pre-resolve drill-downs, which is the one piece
+ * of shared state in this harness.
+ */
+let rows: ContentRow[] = [];
+
+interface PageSummary {
+  days: number;
+  file: string;
+  model: DashboardViewModel;
+  rowCount: number;
+  stateCounts: ReadonlyMap<string, number>;
+}
 
 mkdirSync('preview', { recursive: true });
-writeFileSync('preview/dashboard.html', renderHtml(model), 'utf8');
-writeFileSync('preview/dashboard.md', renderMarkdown(model), 'utf8');
+const summaries: PageSummary[] = [];
 
-console.log('Wrote preview/dashboard.html and preview/dashboard.md');
-console.log(
-  `${model.platformSections.length} platform sections, ${rows.length} content rows, ` +
-    `${model.bestContent.length} ranked best, AI panel ${model.aiSummary.state}.`,
-);
+for (const days of PERIODS) {
+  const input = await loadFixtureDashboard({ asOf, periodDays: days, seed: 'demo' });
+  const model = buildDashboard(input);
+  rows = buildAllContentRows(input);
+
+  const file = `dashboard-${days}d.html`;
+  writeFileSync(`preview/${file}`, renderHtml(model, days), 'utf8');
+  if (days === 30) {
+    writeFileSync('preview/dashboard.md', renderMarkdown(model), 'utf8');
+    writeFileSync('preview/dashboard.html', renderHtml(model, days), 'utf8');
+  }
+
+  summaries.push({ days, file, model, rowCount: rows.length, stateCounts: countStates(model) });
+  console.log(
+    `preview/${file}: ${rows.length} posts, ${model.bestContent.length} ranked best, ` +
+      `AI ${model.aiSummary.state} at ${model.aiSummary.confidence} confidence.`,
+  );
+}
+
+writeFileSync('preview/index.html', renderIndex(summaries), 'utf8');
+console.log('preview/index.html: landing page written.');
+
+function countStates(m: DashboardViewModel): Map<string, number> {
+  const cards = [...m.commonKpis, ...m.platformSections.flatMap((section) => section.kpis)];
+  const displays = [
+    ...cards.map((card) => card.metric),
+    ...rows.flatMap((row) => [...row.nativeMetrics, row.engagementRate, row.performanceIndex]),
+  ];
+  const counts = new Map<string, number>();
+  for (const display of displays) counts.set(display.state, (counts.get(display.state) ?? 0) + 1);
+  return counts;
+}
 
 // ---------------------------------------------------------------------------
 // HTML
 // ---------------------------------------------------------------------------
 
-function renderHtml(m: DashboardViewModel): string {
+function renderHtml(m: DashboardViewModel, days: number): string {
   return `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SNSight - unified dashboard preview</title>
+<title>SNSight - unified dashboard preview (${days} days)</title>
 <style>
   :root { color-scheme: light; }
   * { box-sizing: border-box; }
@@ -88,10 +133,21 @@ function renderHtml(m: DashboardViewModel): string {
   .ai { border:1px solid #ddd6fe; background:#faf5ff; border-radius:8px; padding:14px; margin-top:12px; }
   .legend { display:flex; gap:16px; flex-wrap:wrap; font-size:12px; color:#475569; margin-top:8px; padding:0; list-style:none; }
   .notcalc { color:#64748b; font-weight:400; }
+  .nav { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:16px; }
+  .nav a { font-size:13px; padding:5px 11px; border:1px solid #cbd5e1; border-radius:999px;
+           text-decoration:none; color:#0f172a; background:#fff; }
+  .nav a.on { background:#0369a1; color:#fff; border-color:#0369a1; }
+  .nav a.home { border-style:dashed; }
+  .nav span { font-size:12px; color:#64748b; }
 </style>
 </head>
 <body>
 <div class="wrap">
+<nav class="nav">
+  <a class="home" href="index.html">&larr; Overview</a>
+  <span>Date range:</span>
+  ${PERIODS.map((p) => `<a class="${p === days ? 'on' : ''}" href="dashboard-${p}d.html">Last ${p} days</a>`).join('\n  ')}
+</nav>
 ${m.isDemo ? `<p class="banner"><strong>Sample data.</strong> Generated content so the product can be reviewed before an account is connected. No figure here describes a real account.</p>` : ''}
 <h1>Unified dashboard</h1>
 <p class="muted">${esc(m.period.label)} (${m.period.start} to ${m.period.end}), compared with the ${esc(m.comparison.label)}.</p>
@@ -301,6 +357,143 @@ function esc(value: string): string {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+// ---------------------------------------------------------------------------
+// Landing page
+// ---------------------------------------------------------------------------
+
+function renderIndex(pages: readonly PageSummary[]): string {
+  const thirty = pages.find((page) => page.days === 30) ?? pages[0]!;
+
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SNSight - demo</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:#f8fafc; color:#0f172a;
+         font:16px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  .wrap { max-width:820px; margin:0 auto; padding:40px 20px 72px; }
+  h1 { font-size:28px; margin:0 0 8px; letter-spacing:-.01em; }
+  h2 { font-size:15px; text-transform:uppercase; letter-spacing:.05em; color:#64748b; margin:40px 0 12px; }
+  p { margin:0 0 12px; }
+  .lede { font-size:18px; color:#334155; }
+  .banner { border:1px solid #fcd34d; background:#fffbeb; color:#78350f;
+            padding:12px 14px; border-radius:6px; margin:20px 0; font-size:14px; }
+  .cards { display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); }
+  a.card { display:block; background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:16px;
+           text-decoration:none; color:inherit; box-shadow:0 1px 2px rgba(15,23,42,.04); }
+  a.card:hover { border-color:#0369a1; }
+  a.card strong { display:block; font-size:17px; margin-bottom:6px; }
+  a.card span { font-size:13px; color:#475569; display:block; }
+  ol,ul { margin:0 0 12px; padding-left:22px; }
+  li { margin-bottom:8px; }
+  table { width:100%; border-collapse:collapse; font-size:14px; margin:8px 0 16px; }
+  th,td { text-align:left; padding:8px; border-bottom:1px solid #e2e8f0; }
+  th { font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:#64748b; }
+  code { background:#f1f5f9; padding:1px 5px; border-radius:4px; font-size:13px; }
+  .small { font-size:13px; color:#475569; }
+  footer { margin-top:48px; padding-top:20px; border-top:1px solid #e2e8f0; font-size:13px; color:#64748b; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>SNSight</h1>
+<p class="lede">Instagram and Threads analytics in one dashboard. This is a working demo of the unified
+dashboard, running on generated data.</p>
+
+<p class="banner"><strong>Nothing here is real.</strong> Every figure comes from a deterministic fixture
+generator, not from a connected account. The generator deliberately produces awkward cases &mdash; posts
+missing reach, days with no activity, groups too small to score &mdash; because those are the states that
+usually go unimplemented.</p>
+
+<h2>Open the dashboard</h2>
+<div class="cards">
+${pages
+  .map(
+    (page) => `  <a class="card" href="${page.file}">
+    <strong>Last ${page.days} days</strong>
+    <span>${page.rowCount} posts &middot; ${page.model.bestContent.length} ranked</span>
+    <span>AI confidence: ${page.model.aiSummary.confidence}</span>
+  </a>`,
+  )
+  .join('\n')}
+</div>
+<p class="small">The same account and the same data, across three date ranges. Confidence and the number of
+ranked posts change with the range, which is the intended behaviour: a shorter window is weaker evidence.</p>
+
+<h2>What to look at</h2>
+<ol>
+  <li><strong>The <code>!</code> beside the Instagram engagement rate.</strong> Some posts did not report
+  reach, so the rate was computed against views &mdash; and it says so, because a value measured on a
+  substitute denominator cannot be compared with one measured on the real thing.</li>
+  <li><strong>The follower growth card has no change badge.</strong> That metric is already a change.
+  Pairing it with "no comparison available" would be noise dressed as information.</li>
+  <li><strong>Hollow dots on the trend line.</strong> Days with no posts are gaps, not zeroes. Plotting
+  them at the baseline would draw a decline that never happened.</li>
+  <li><strong>Instagram views and Threads views are never added together.</strong> They measure different
+  things. Only post counts and followers are combined, and the follower total admits it double counts
+  anyone following both accounts.</li>
+  <li><strong>The AI panel is pending, yet states its confidence.</strong> Confidence is calculated from
+  the evidence base by rule before any model runs, because a model asked to rate itself will claim high
+  confidence on three posts.</li>
+  <li><strong>Every absent value explains itself.</strong> Expand "What does this mean?" on any card, and
+  look for the not-calculable states in the content tables: each carries a reason and a next step.</li>
+</ol>
+
+<h2>Metric states in the 30-day render</h2>
+<table>
+<thead><tr><th>State</th><th>Count</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code>VALUE</code></td><td>${thirty.stateCounts.get('VALUE') ?? 0}</td><td>Computed on its preferred inputs.</td></tr>
+<tr><td><code>VALUE_WITH_CAVEAT</code></td><td>${thirty.stateCounts.get('VALUE_WITH_CAVEAT') ?? 0}</td><td>Computed on a fallback denominator, disclosed with the value.</td></tr>
+<tr><td><code>NOT_CALCULABLE</code></td><td>${thirty.stateCounts.get('NOT_CALCULABLE') ?? 0}</td><td>Knowable in principle, not knowable here. Carries a reason and an action.</td></tr>
+<tr><td><code>NOT_SYNCED</code></td><td>${thirty.stateCounts.get('NOT_SYNCED') ?? 0}</td><td>Outside the collected window. Distinct from zero and from broken.</td></tr>
+</tbody>
+</table>
+<p class="small">All four appear, which is the point: each needs a design, and only the first is usually
+mocked.</p>
+
+<h2>Decisions behind this</h2>
+<p>The specification asks for several things no official API can deliver. Four decisions change product
+scope and need sign-off:</p>
+<ul>
+  <li><a href="${REPO_BLOB}/docs/adr/0001-competitor-data-path.md">Competitor monitoring is Instagram-only</a>
+  &mdash; Threads publishes no API for accounts you do not own.</li>
+  <li><a href="${REPO_BLOB}/docs/adr/0002-meta-connection-strategy.md">Instagram must use the Facebook Login flow</a>
+  &mdash; which requires users to have a linked Facebook Page.</li>
+  <li><a href="${REPO_BLOB}/docs/adr/0003-metric-definition-registry.md">Engagement rate is two formulas, not one</a>
+  &mdash; the specification's single formula summed metrics that never coexist.</li>
+  <li><a href="${REPO_BLOB}/docs/adr/0004-normalized-performance-index.md">The 0-100 index is a percentile within a cohort</a>
+  &mdash; relative to this account only, never an absolute score.</li>
+</ul>
+<p class="small">Full set: <a href="${REPO_TREE}/docs/adr">the seven ADRs</a> and
+<a href="${REPO_BLOB}/docs/spec-amendments.md">the spec amendment map</a>.</p>
+
+<h2>How much of this is verified</h2>
+<p>66 automated checks pass over the metric engine, the fixture provider and this dashboard's view model,
+covering the behaviour above: that a missing input does not silently shrink a percentage, that a fallback
+denominator is always disclosed, that a percentile is never published on fewer than 8 comparable posts.</p>
+<p>The React application, by contrast, <strong>has never been run</strong>. Dependencies could not be
+installed where this was written, so these pages come from a separate static renderer that consumes the
+identical view model. The wording and the states are real; the colours, spacing and mobile layout are not
+yet confirmed.</p>
+
+<footer>
+Generated by <code>scripts/render-preview.ts</code> from fixture seed <code>demo</code>, as of 2026-07-31.
+Deterministic: the same seed always produces this page.
+&middot; <a href="${REPO_BLOB}/preview/dashboard.md">Text version</a>
+&middot; <a href="${REPO_TREE}">Source</a>
+</footer>
+
+</div>
+</body>
+</html>`;
 }
 
 // ---------------------------------------------------------------------------

@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SNSight - unified dashboard preview (7 days)</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:#f8fafc; color:#0f172a;
+         font:15px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  .wrap { max-width:1100px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:20px; margin:0 0 4px; }
+  h2 { font-size:12px; text-transform:uppercase; letter-spacing:.05em; color:#64748b; margin:32px 0 12px; }
+  h3 { font-size:14px; margin:0; }
+  .banner { border:1px solid #fcd34d; background:#fffbeb; color:#78350f;
+            padding:10px 12px; border-radius:6px; margin-bottom:16px; font-size:14px; }
+  .muted { color:#475569; font-size:13px; }
+  .small { font-size:12px; color:#475569; }
+  .grid { display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); }
+  .card { background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:14px;
+          box-shadow:0 1px 2px rgba(15,23,42,.04); }
+  .card-head { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+  .value { font-size:24px; font-weight:600; font-variant-numeric:tabular-nums; margin:10px 0 0; }
+  .absent-head { font-size:15px; font-weight:600; color:#334155; margin:10px 0 0; }
+  .badge { display:inline-block; border:1px solid; border-radius:4px; padding:2px 6px;
+           font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; white-space:nowrap; }
+  .b-raw { background:#f1f5f9; color:#334155; border-color:#cbd5e1; }
+  .b-calc { background:#f0f9ff; color:#075985; border-color:#7dd3fc; }
+  .b-est { background:#fffbeb; color:#78350f; border-color:#fcd34d; }
+  .b-ai { background:#f5f3ff; color:#4c1d95; border-color:#c4b5fd; }
+  .chg { margin:8px 0 0; font-size:12px; font-weight:600; display:flex; gap:4px; align-items:center; }
+  .pos { color:#065f46; } .neg { color:#9f1239; } .neu { color:#475569; }
+  .caveat { color:#78350f; font-size:12px; margin:6px 0 0; }
+  .foot { color:#64748b; font-size:12px; margin:8px 0 0; }
+  details { margin-top:8px; }
+  summary { cursor:pointer; font-size:12px; color:#0369a1; }
+  table { width:100%; border-collapse:collapse; margin-top:8px; font-size:13px; }
+  th,td { text-align:left; padding:6px 8px; border-bottom:1px solid #e2e8f0; vertical-align:top; }
+  th { font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:#64748b; }
+  .ai { border:1px solid #ddd6fe; background:#faf5ff; border-radius:8px; padding:14px; margin-top:12px; }
+  .legend { display:flex; gap:16px; flex-wrap:wrap; font-size:12px; color:#475569; margin-top:8px; padding:0; list-style:none; }
+  .notcalc { color:#64748b; font-weight:400; }
+  .nav { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:16px; }
+  .nav a { font-size:13px; padding:5px 11px; border:1px solid #cbd5e1; border-radius:999px;
+           text-decoration:none; color:#0f172a; background:#fff; }
+  .nav a.on { background:#0369a1; color:#fff; border-color:#0369a1; }
+  .nav a.home { border-style:dashed; }
+  .nav span { font-size:12px; color:#64748b; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav class="nav">
+  <a class="home" href="index.html">&larr; Overview</a>
+  <span>Date range:</span>
+  <a class="on" href="dashboard-7d.html">Last 7 days</a>
+  <a class="" href="dashboard-30d.html">Last 30 days</a>
+  <a class="" href="dashboard-90d.html">Last 90 days</a>
+</nav>
+<p class="banner"><strong>Sample data.</strong> Generated content so the product can be reviewed before an account is connected. No figure here describes a real account.</p>
+<h1>Unified dashboard</h1>
+<p class="muted">Last 7 days (2026-07-25 to 2026-07-31), compared with the previous 7 days.</p>
+
+<ul class="legend">
+<li>● <strong>@demo.studio</strong> synced 2026-07-30 23:18 UTC &mdash; Connected</li>
+<li>⚠ <strong>@demo.studio.threads</strong> synced 2026-07-30 23:18 UTC &mdash; Connection expires soon - reconnect to avoid a gap</li>
+</ul>
+
+<p class="small">This workspace uses generated sample data. No figure here describes a real account.</p>
+
+<h2>Across platforms</h2>
+<div class="grid"><div class="card">
+  <div class="card-head">
+    <h3>Followers</h3>
+    <span class="badge b-raw">From platform</span>
+  </div>
+  <p class="value">25,895</p>
+  <p class="chg pos">
+    <span aria-hidden="true">▲</span><span>+4.2% vs previous 7 days</span>
+  </p>
+  <p class="foot">Combined across platforms. The same person may follow both accounts, so this is not a unique-audience figure.</p>
+  <details><summary>What does this mean?</summary><p class="small">Followers at the end of the selected period. Instagram and Threads followers are added together.</p></details>
+  <p class="small">No drill-down: no single post explains this figure.</p>
+</div>
+<div class="card">
+  <div class="card-head">
+    <h3>Follower growth</h3>
+    <span class="badge b-calc">Calculated</span>
+  </div>
+  <p class="value">4.2%</p>
+  
+  <p class="foot">Growth across the selected period, not against the comparison period.</p>
+  <details><summary>What does this mean?</summary><p class="small">How much the follower count grew or shrank across the selected period. Formula: (ending followers - starting followers) / starting followers x 100.</p></details>
+  <p class="small">No drill-down: no single post explains this figure.</p>
+</div>
+<div class="card">
+  <div class="card-head">
+    <h3>Posts published</h3>
+    <span class="badge b-calc">Calculated</span>
+  </div>
+  <p class="value">5</p>
+  <p class="chg neu">
+    <span aria-hidden="true">■</span><span>Flat vs previous 7 days</span>
+  </p>
+  <p class="foot">A post is a post on both platforms, so this total is combined. Views and interactions are not.</p>
+  <details><summary>What does this mean?</summary><p class="small">Posts published inside the selected period. Counted from collected media, so it can differ from the platform profile total when the period predates collection. Formula: count of posts published within the period.</p></details>
+  <details><summary>Show the 5 post(s) behind this figure</summary>
+         <p class="small">Filters: All platforms &middot; 2026-07-25 to 2026-07-31</p>
+         <table>
+<thead><tr><th>Post</th><th>Index</th><th>Engagement</th><th>Native metrics</th></tr></thead>
+<tbody>
+<tr>
+  <td><strong>TH TH_IMAGE</strong> 2026-07-28<br>personal experience: customer story #2</td>
+  <td>43 / 100</td>
+  <td>2.1%</td>
+  <td>Views: 76,935<br>Likes: 1,025<br>Replies: 384<br>Reposts: 96<br>Quotes: 77</td>
+</tr>
+<tr>
+  <td><strong>TH TH_VIDEO</strong> 2026-07-26<br>question: routine #1</td>
+  <td>17 / 100</td>
+  <td>1.6%</td>
+  <td>Views: 24,957<br>Likes: 55<br>Replies: 89<br>Reposts: 179<br>Quotes: 78</td>
+</tr>
+<tr>
+  <td><strong>IG IG_STORY</strong> 2026-07-26<br>contrarian take: routine #3</td>
+  <td>71 / 100</td>
+  <td>4.5%</td>
+  <td>Views: 69,031<br>Reach: 45,853<br>Likes: 630<br>Comments: 662<br>Saves: 4</td>
+</tr>
+<tr>
+  <td><strong>IG IG_IMAGE</strong> 2026-07-25<br>plain information: ask me anything #2</td>
+  <td>29 / 100</td>
+  <td>4.5%</td>
+  <td>Views: 33,610<br>Reach: 28,634<br>Likes: 765<br>Comments: 375<br>Saves: 49</td>
+</tr>
+<tr>
+  <td><strong>IG IG_REEL</strong> 2026-07-25<br>conclusion first: product tips #1</td>
+  <td>33 / 100</td>
+  <td>3.6%</td>
+  <td>Views: 48,816<br>Reach: 36,076<br>Likes: 503<br>Comments: 216<br>Saves: 524</td>
+</tr>
+</tbody></table>
+         
+        </details>
+</div></div>
+
+
+<h2>Instagram &mdash; Connected</h2>
+<div class="grid"><div class="card">
+  <div class="card-head">
+    <h3>Views <span class="small">Instagram</span></h3>
+    <span class="badge b-raw">From platform</span>
+  </div>
+  <p class="value">151,457</p>
+  <p class="chg neu">
+    <span aria-hidden="true">■</span><span>Flat vs previous 7 days</span>
+  </p>
+  
+  <details><summary>What does this mean?</summary><p class="small">Plays or views of the post. Recent Instagram API versions consolidated older impression-style metrics into views, which is why this definition carries an availability window.</p></details>
+  <details><summary>Show the 3 post(s) behind this figure</summary>
+         <p class="small">Filters: Instagram &middot; 2026-07-25 to 2026-07-31</p>
+         <table>
+<thead><tr><th>Post</th><th>Index</th><th>Engagement</th><th>Native metrics</th></tr></thead>
+<tbody>
+<tr>
+  <td><strong>IG IG_STORY</strong> 2026-07-26<br>contrarian take: routine #3</td>
+  <td>71 / 100</td>
+  <td>4.5%</td>
+  <td>Views: 69,031<br>Reach: 45,853<br>Likes: 630<br>Comments: 662<br>Saves: 4</td>
+</tr>
+<tr>
+  <td><strong>IG IG_REEL</strong> 2026-07-25<br>conclusion first: product tips #1</td>
+  <td>33 / 100</td>
+  <td>3.6%</td>
+  <td>Views: 48,816<br>Reach: 36,076<br>Likes: 503<br>Comments: 216<br>Saves: 524</td>
+</tr>
+<tr>
+  <td><strong>IG IG_IMAGE</strong> 2026-07-25<br>plain information: ask me anything #2</td>
+  <td>29 / 100</td>
+  <td>4.5%</td>
+  <td>Views: 33,610<br>Reach: 28,634<br>Likes: 765<br>Comments: 375<br>Saves: 49</td>
+</tr>
+</tbody></table>
+         
+        </details>
+</div>
+<div class="card">
+  <div class="card-head">
+    <h3>Interactions <span class="small">Instagram</span></h3>
+    <span class="badge b-calc">Calculated</span>
+  </div>
+  <p class="value">4,649</p>
+  <p class="chg neu">
+    <span aria-hidden="true">■</span><span>Flat vs previous 7 days</span>
+  </p>
+  
+  <details><summary>What does this mean?</summary><p class="small">Sum of Instagram interactions on the post. Saves and shares are owner-only, so this is unavailable for competitors. Formula: likes + comments + saves + shares.</p></details>
+  <details><summary>Show the 3 post(s) behind this figure</summary>
+         <p class="small">Filters: Instagram &middot; 2026-07-25 to 2026-07-31</p>
+         <table>
+<thead><tr><th>Post</th><th>Index</th><th>Engagement</th><th>Native metrics</th></tr></thead>
+<tbody>
+<tr>
+  <td><strong>IG IG_STORY</strong> 2026-07-26<br>contrarian take: routine #3</td>
+  <td>71 / 100</td>
+  <td>4.5%</td>
+  <td>Views: 69,031<br>Reach: 45,853<br>Likes: 630<br>Comments: 662<br>Saves: 4</td>
+</tr>
+<tr>
+  <td><strong>IG IG_REEL</strong> 2026-07-25<br>conclusion first: product tips #1</td>
+  <td>33 / 100</td>
+  <td>3.6%</td>
+  <td>Views: 48,816<br>Reach: 36,076<br>Likes: 503<br>Comments: 216<br>Saves: 524</td>
+</tr>
+<tr>
+  <td><strong>IG IG_IMAGE</strong> 2026-07-25<br>plain information: ask me anything #2</td>
+  <td>29 / 100</td>
+  <td>4.5%</td>
+  <td>Views: 33,610<br>Reach: 28,634<br>Likes: 765<br>Comments: 375<br>Saves: 49</td>
+</tr>
+</tbody></table>
+         
+        </details>
+</div>
+<div class="card">
+  <div class="card-head">
+    <h3>Engagement rate <span class="small">Instagram</span></h3>
+    <span class="badge b-calc">Calculated</span>
+  </div>
+  <p class="value">4.2%</p>
+  <p class="chg neu">
+    <span aria-hidden="true">■</span><span>Flat vs previous 7 days</span>
+  </p>
+  
+  <details><summary>What does this mean?</summary><p class="small">The share of accounts that saw the post and then interacted with it. Instagram and Threads engagement rates are calculated differently and are not directly comparable. Formula: (likes + comments + saves + shares) / reach x 100.</p></details>
+  <details><summary>Show the 3 post(s) behind this figure</summary>
+         <p class="small">Filters: Instagram &middot; 2026-07-25 to 2026-07-31</p>
+         <table>
+<thead><tr><th>Post</th><th>Index</th><th>Engagement</th><th>Native metrics</th></tr></thead>
+<tbody>
+<tr>
+  <td><strong>IG IG_IMAGE</strong> 2026-07-25<br>plain information: ask me anything #2</td>
+  <td>29 / 100</td>
+  <td>4.5%</td>
+  <td>Views: 33,610<br>Reach: 28,634<br>Likes: 765<br>Comments: 375<br>Saves: 49</td>
+</tr>
+<tr>
+  <td><strong>IG IG_STORY</strong> 2026-07-26<br>contrarian take: routine #3</td>
+  <td>71 / 100</td>
+  <td>4.5%</td>
+  <td>Views: 69,031<br>Reach: 45,853<br>Likes: 630<br>Comments: 662<br>Saves: 4</td>
+</tr>
+<tr>
+  <td><strong>IG IG_REEL</strong> 2026-07-25<br>conclusion first: product tips #1</td>
+  <td>33 / 100</td>
+  <td>3.6%</td>
+  <td>Views: 48,816<br>Reach: 36,076<br>Likes: 503<br>Comments: 216<br>Saves: 524</td>
+</tr>
+</tbody></table>
+         
+        </details>
+</div></div>
+<div class="card" style="margin-top:12px">
+  <p class="small"><strong>Views by day</strong> <span class="badge b-raw">From platform</span></p>
+<svg viewBox="0 0 720 170" width="100%" role="img" aria-label="Views per day">
+  <g transform="translate(46,10)">
+    <line x1="0" y1="130" x2="662" y2="130" stroke="#cbd5e1"/>
+    <text x="-8" y="10" text-anchor="end" font-size="10" fill="#64748b">82,426</text>
+    <text x="-8" y="130" text-anchor="end" font-size="10" fill="#64748b">0</text>
+    <path d="M0.0,0.0 L110.3,21.1" fill="none" stroke="#0369a1" stroke-width="2"/>
+    <circle cx="0.0" cy="0.0" r="3.2" fill="#0369a1"><title>2026-07-25: 82,426 (2 post(s))</title></circle><circle cx="110.3" cy="21.1" r="3.2" fill="#0369a1"><title>2026-07-26: 69,031 (1 post(s))</title></circle><circle cx="220.7" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="331.0" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="441.3" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="551.7" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="662.0" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/>
+    <text x="0" y="148" font-size="10" fill="#64748b">2026-07-25</text>
+    <text x="662" y="148" text-anchor="end" font-size="10" fill="#64748b">2026-07-31</text>
+  </g>
+</svg>
+<ul class="legend">
+  <li>&#9679; Published activity</li><li>&#9675; No posts that day</li><li>&#215; Outside collected data</li>
+</ul>
+  <p class="foot">3 posts, 60% of everything published in this period. Interaction totals are platform-native. Instagram counts saves and shares; Threads counts replies, reposts and quotes, so the two totals are shown side by side rather than summed.</p>
+  
+</div>
+
+<h2>Threads &mdash; Connection expires soon - reconnect to avoid a gap</h2>
+<div class="grid"><div class="card">
+  <div class="card-head">
+    <h3>Views <span class="small">Threads</span></h3>
+    <span class="badge b-raw">From platform</span>
+  </div>
+  <p class="value">101,892</p>
+  <p class="chg neu">
+    <span aria-hidden="true">■</span><span>Flat vs previous 7 days</span>
+  </p>
+  <p class="foot">Threads views are not equivalent to Instagram reach and are never added to it.</p>
+  <details><summary>What does this mean?</summary><p class="small">How many times the thread was viewed. Threads reports views rather than reach, so this figure is never added to an Instagram reach total. Platform data available from 2024-04-13.</p></details>
+  <details><summary>Show the 2 post(s) behind this figure</summary>
+         <p class="small">Filters: Threads &middot; 2026-07-25 to 2026-07-31</p>
+         <table>
+<thead><tr><th>Post</th><th>Index</th><th>Engagement</th><th>Native metrics</th></tr></thead>
+<tbody>
+<tr>
+  <td><strong>TH TH_IMAGE</strong> 2026-07-28<br>personal experience: customer story #2</td>
+  <td>43 / 100</td>
+  <td>2.1%</td>
+  <td>Views: 76,935<br>Likes: 1,025<br>Replies: 384<br>Reposts: 96<br>Quotes: 77</td>
+</tr>
+<tr>
+  <td><strong>TH TH_VIDEO</strong> 2026-07-26<br>question: routine #1</td>
+  <td>17 / 100</td>
+  <td>1.6%</td>
+  <td>Views: 24,957<br>Likes: 55<br>Replies: 89<br>Reposts: 179<br>Quotes: 78</td>
+</tr>
+</tbody></table>
+         
+        </details>
+</div>
+<div class="card">
+  <div class="card-head">
+    <h3>Interactions <span class="small">Threads</span></h3>
+    <span class="badge b-calc">Calculated</span>
+  </div>
+  <p class="value">1,983</p>
+  <p class="chg neu">
+    <span aria-hidden="true">■</span><span>Flat vs previous 7 days</span>
+  </p>
+  
+  <details><summary>What does this mean?</summary><p class="small">Sum of Threads interactions on the post. Formula: likes + replies + reposts + quotes. Platform data available from 2024-04-13.</p></details>
+  <details><summary>Show the 2 post(s) behind this figure</summary>
+         <p class="small">Filters: Threads &middot; 2026-07-25 to 2026-07-31</p>
+         <table>
+<thead><tr><th>Post</th><th>Index</th><th>Engagement</th><th>Native metrics</th></tr></thead>
+<tbody>
+<tr>
+  <td><strong>TH TH_IMAGE</strong> 2026-07-28<br>personal experience: customer story #2</td>
+  <td>43 / 100</td>
+  <td>2.1%</td>
+  <td>Views: 76,935<br>Likes: 1,025<br>Replies: 384<br>Reposts: 96<br>Quotes: 77</td>
+</tr>
+<tr>
+  <td><strong>TH TH_VIDEO</strong> 2026-07-26<br>question: routine #1</td>
+  <td>17 / 100</td>
+  <td>1.6%</td>
+  <td>Views: 24,957<br>Likes: 55<br>Replies: 89<br>Reposts: 179<br>Quotes: 78</td>
+</tr>
+</tbody></table>
+         
+        </details>
+</div>
+<div class="card">
+  <div class="card-head">
+    <h3>Engagement rate <span class="small">Threads</span></h3>
+    <span class="badge b-calc">Calculated</span>
+  </div>
+  <p class="value">1.9%</p>
+  <p class="chg neu">
+    <span aria-hidden="true">■</span><span>Flat vs previous 7 days</span>
+  </p>
+  
+  <details><summary>What does this mean?</summary><p class="small">The share of views that produced any interaction: a like, reply, repost or quote. Formula: (likes + replies + reposts + quotes) / views x 100. Platform data available from 2024-04-13.</p></details>
+  <details><summary>Show the 2 post(s) behind this figure</summary>
+         <p class="small">Filters: Threads &middot; 2026-07-25 to 2026-07-31</p>
+         <table>
+<thead><tr><th>Post</th><th>Index</th><th>Engagement</th><th>Native metrics</th></tr></thead>
+<tbody>
+<tr>
+  <td><strong>TH TH_IMAGE</strong> 2026-07-28<br>personal experience: customer story #2</td>
+  <td>43 / 100</td>
+  <td>2.1%</td>
+  <td>Views: 76,935<br>Likes: 1,025<br>Replies: 384<br>Reposts: 96<br>Quotes: 77</td>
+</tr>
+<tr>
+  <td><strong>TH TH_VIDEO</strong> 2026-07-26<br>question: routine #1</td>
+  <td>17 / 100</td>
+  <td>1.6%</td>
+  <td>Views: 24,957<br>Likes: 55<br>Replies: 89<br>Reposts: 179<br>Quotes: 78</td>
+</tr>
+</tbody></table>
+         
+        </details>
+</div></div>
+<div class="card" style="margin-top:12px">
+  <p class="small"><strong>Views by day</strong> <span class="badge b-raw">From platform</span></p>
+<svg viewBox="0 0 720 170" width="100%" role="img" aria-label="Views per day">
+  <g transform="translate(46,10)">
+    <line x1="0" y1="130" x2="662" y2="130" stroke="#cbd5e1"/>
+    <text x="-8" y="10" text-anchor="end" font-size="10" fill="#64748b">76,935</text>
+    <text x="-8" y="130" text-anchor="end" font-size="10" fill="#64748b">0</text>
+    
+    <circle cx="0.0" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="110.3" cy="87.8" r="3.2" fill="#0369a1"><title>2026-07-26: 24,957 (1 post(s))</title></circle><circle cx="220.7" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="331.0" cy="0.0" r="3.2" fill="#0369a1"><title>2026-07-28: 76,935 (1 post(s))</title></circle><circle cx="441.3" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="551.7" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="662.0" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/>
+    <text x="0" y="148" font-size="10" fill="#64748b">2026-07-25</text>
+    <text x="662" y="148" text-anchor="end" font-size="10" fill="#64748b">2026-07-31</text>
+  </g>
+</svg>
+<ul class="legend">
+  <li>&#9679; Published activity</li><li>&#9675; No posts that day</li><li>&#215; Outside collected data</li>
+</ul>
+  <p class="foot">2 posts, 40% of everything published in this period. Interaction totals are platform-native. Instagram counts saves and shares; Threads counts replies, reposts and quotes, so the two totals are shown side by side rather than summed.</p>
+  
+</div>
+
+<h2>Content ranking</h2>
+<div class="card">
+  <h3>Best performing</h3>
+  <table>
+<thead><tr><th>Post</th><th>Index</th><th>Engagement</th><th>Native metrics</th></tr></thead>
+<tbody>
+<tr>
+  <td><strong>IG IG_STORY</strong> 2026-07-26<br>contrarian take: routine #3</td>
+  <td>71 / 100</td>
+  <td>4.5%</td>
+  <td>Views: 69,031<br>Reach: 45,853<br>Likes: 630<br>Comments: 662<br>Saves: 4</td>
+</tr>
+<tr>
+  <td><strong>TH TH_IMAGE</strong> 2026-07-28<br>personal experience: customer story #2</td>
+  <td>43 / 100</td>
+  <td>2.1%</td>
+  <td>Views: 76,935<br>Likes: 1,025<br>Replies: 384<br>Reposts: 96<br>Quotes: 77</td>
+</tr>
+<tr>
+  <td><strong>IG IG_REEL</strong> 2026-07-25<br>conclusion first: product tips #1</td>
+  <td>33 / 100</td>
+  <td>3.6%</td>
+  <td>Views: 48,816<br>Reach: 36,076<br>Likes: 503<br>Comments: 216<br>Saves: 524</td>
+</tr>
+</tbody></table>
+</div>
+<div class="card" style="margin-top:12px">
+  <h3>Weakest performing</h3>
+  <table>
+<thead><tr><th>Post</th><th>Index</th><th>Engagement</th><th>Native metrics</th></tr></thead>
+<tbody>
+<tr>
+  <td><strong>TH TH_VIDEO</strong> 2026-07-26<br>question: routine #1</td>
+  <td>17 / 100</td>
+  <td>1.6%</td>
+  <td>Views: 24,957<br>Likes: 55<br>Replies: 89<br>Reposts: 179<br>Quotes: 78</td>
+</tr>
+<tr>
+  <td><strong>IG IG_IMAGE</strong> 2026-07-25<br>plain information: ask me anything #2</td>
+  <td>29 / 100</td>
+  <td>4.5%</td>
+  <td>Views: 33,610<br>Reach: 28,634<br>Likes: 765<br>Comments: 375<br>Saves: 49</td>
+</tr>
+<tr>
+  <td><strong>IG IG_REEL</strong> 2026-07-25<br>conclusion first: product tips #1</td>
+  <td>33 / 100</td>
+  <td>3.6%</td>
+  <td>Views: 48,816<br>Reach: 36,076<br>Likes: 503<br>Comments: 216<br>Saves: 524</td>
+</tr>
+</tbody></table>
+</div>
+<p class="small">Ranked by performance index, which compares each post with others of the same type on the same account. Native metrics are shown alongside, since a high index can accompany modest absolute numbers.</p>
+
+<h2>AI summary</h2>
+<div class="ai">
+  <p class="small"><strong>Confidence: LOW</strong> &middot; 5 posts, 2026-07-25 to 2026-07-31</p>
+  <p>Written analysis is generated in the background and appears here when it is ready. Confidence is calculated from the evidence base before analysis runs, so it is shown now.</p>
+  <p class="small"><strong>Why this confidence:</strong> Limited evidence: only 5 post(s) analysed (8 needed for medium confidence); only 7 day(s) of data covered (14 needed). Conclusions are provisional and may change as data accumulates.</p>
+  <p class="small">No supporting posts are listed because there is no conclusion yet.</p>
+</div>
+
+<h2>Recommended next actions</h2>
+
+
+<h2>About this file</h2>
+<p class="small">Static review harness generated by <code>scripts/render-preview.ts</code> from the same view model the
+React components consume. Drill-downs are pre-resolved into expandable sections here; in the application they open as a
+modal. Wording, metric labels, empty-state sentences and footnotes are identical.</p>
+</div>
+</body>
+</html>

@@ -42,11 +42,16 @@ sign-off:
 
 ## Reviewing the dashboard without installing
 
-`preview/dashboard.md` is the fastest way to review the vertical slice: it lists every KPI card with
-its provenance label, value state, change sentence, footnote, tooltip and drill-down count, taken
-straight from the view model the React components consume. `preview/dashboard.html` is the same
-content as a browsable page with drill-downs pre-expanded. Both come from
-`scripts/render-preview.ts`.
+`npm run preview` writes a browsable static site to `preview/`, generated from the same view model
+the React components consume:
+
+- `preview/index.html` - landing page, with what to look at and how much is verified
+- `preview/dashboard-7d.html`, `-30d.html`, `-90d.html` - the same account across three date ranges,
+  with drill-downs pre-resolved into expandable sections so the pages need no JavaScript
+- `preview/dashboard.md` - the 30-day render as text, for reviewing copy in a plain file viewer
+
+The three ranges are worth comparing: 7 days yields `LOW` AI confidence and 30 or 90 days yields
+`HIGH`, because the rubric reads the evidence base rather than asking a model how sure it feels.
 
 The current render exercises all four metric states - 244 plain values, 4 disclosed view-fallbacks,
 3 not-calculable and 3 not-collected - which is what the awkward fixture data is for.
