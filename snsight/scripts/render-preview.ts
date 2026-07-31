@@ -13,6 +13,7 @@
  */
 
 import { writeFileSync, mkdirSync } from 'node:fs';
+import { toCssVariables } from '../src/lib/design/tokens.js';
 import {
   buildAllContentRows,
   buildDashboard,
@@ -72,7 +73,8 @@ for (const days of PERIODS) {
 }
 
 writeFileSync('preview/index.html', renderIndex(summaries), 'utf8');
-console.log('preview/index.html: landing page written.');
+writeFileSync('preview/login.html', renderLogin(), 'utf8');
+console.log('preview/index.html and preview/login.html written.');
 
 function countStates(m: DashboardViewModel): Map<string, number> {
   const cards = [...m.commonKpis, ...m.platformSections.flatMap((section) => section.kpis)];
@@ -97,48 +99,60 @@ function renderHtml(m: DashboardViewModel, days: number): string {
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SNSight - unified dashboard preview (${days} days)</title>
 <style>
-  :root { color-scheme: light; }
-  * { box-sizing: border-box; }
-  body { margin:0; background:#f8fafc; color:#0f172a;
-         font:15px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
-  .wrap { max-width:1100px; margin:0 auto; padding:24px 16px 64px; }
-  h1 { font-size:20px; margin:0 0 4px; }
-  h2 { font-size:12px; text-transform:uppercase; letter-spacing:.05em; color:#64748b; margin:32px 0 12px; }
-  h3 { font-size:14px; margin:0; }
-  .banner { border:1px solid #fcd34d; background:#fffbeb; color:#78350f;
-            padding:10px 12px; border-radius:6px; margin-bottom:16px; font-size:14px; }
-  .muted { color:#475569; font-size:13px; }
-  .small { font-size:12px; color:#475569; }
-  .grid { display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); }
-  .card { background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:14px;
-          box-shadow:0 1px 2px rgba(15,23,42,.04); }
-  .card-head { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
-  .value { font-size:24px; font-weight:600; font-variant-numeric:tabular-nums; margin:10px 0 0; }
-  .absent-head { font-size:15px; font-weight:600; color:#334155; margin:10px 0 0; }
-  .badge { display:inline-block; border:1px solid; border-radius:4px; padding:2px 6px;
-           font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; white-space:nowrap; }
-  .b-raw { background:#f1f5f9; color:#334155; border-color:#cbd5e1; }
-  .b-calc { background:#f0f9ff; color:#075985; border-color:#7dd3fc; }
-  .b-est { background:#fffbeb; color:#78350f; border-color:#fcd34d; }
-  .b-ai { background:#f5f3ff; color:#4c1d95; border-color:#c4b5fd; }
-  .chg { margin:8px 0 0; font-size:12px; font-weight:600; display:flex; gap:4px; align-items:center; }
-  .pos { color:#065f46; } .neg { color:#9f1239; } .neu { color:#475569; }
-  .caveat { color:#78350f; font-size:12px; margin:6px 0 0; }
-  .foot { color:#64748b; font-size:12px; margin:8px 0 0; }
-  details { margin-top:8px; }
-  summary { cursor:pointer; font-size:12px; color:#0369a1; }
-  table { width:100%; border-collapse:collapse; margin-top:8px; font-size:13px; }
-  th,td { text-align:left; padding:6px 8px; border-bottom:1px solid #e2e8f0; vertical-align:top; }
-  th { font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:#64748b; }
-  .ai { border:1px solid #ddd6fe; background:#faf5ff; border-radius:8px; padding:14px; margin-top:12px; }
-  .legend { display:flex; gap:16px; flex-wrap:wrap; font-size:12px; color:#475569; margin-top:8px; padding:0; list-style:none; }
-  .notcalc { color:#64748b; font-weight:400; }
-  .nav { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:16px; }
-  .nav a { font-size:13px; padding:5px 11px; border:1px solid #cbd5e1; border-radius:999px;
-           text-decoration:none; color:#0f172a; background:#fff; }
-  .nav a.on { background:#0369a1; color:#fff; border-color:#0369a1; }
-  .nav a.home { border-style:dashed; }
-  .nav span { font-size:12px; color:#64748b; }
+:root {
+  color-scheme: light;
+${toCssVariables()}
+}
+* { box-sizing: border-box; }
+body { margin:0; background:var(--surface-page); color:var(--text-secondary);
+       font:var(--font-body)/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+.wrap { max-width:1140px; margin:0 auto; padding:24px 16px 72px; }
+h1 { font-size:24px; color:var(--text-primary); margin:0 0 6px; letter-spacing:-.01em; }
+h2 { font-size:var(--font-small); text-transform:uppercase; letter-spacing:.06em;
+     color:var(--text-muted); margin:36px 0 12px; }
+h3 { font-size:16px; color:var(--text-primary); margin:0; }
+p { margin:0 0 10px; }
+a { color:var(--accent); text-underline-offset:2px; }
+:where(a,summary,[tabindex]):focus-visible { outline:2px solid var(--line-focus); outline-offset:2px; border-radius:3px; }
+.banner { border:1px solid var(--warn-line); background:var(--warn-bg); color:var(--warn-text);
+          padding:12px 14px; border-radius:6px; margin-bottom:18px; }
+.muted { color:var(--text-secondary); }
+.small { font-size:var(--font-small); color:var(--text-muted); }
+.grid { display:grid; gap:14px; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); }
+.card { background:var(--surface-card); border:1px solid var(--line-default); border-radius:10px; padding:16px; }
+.card-head { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+.value { font-size:28px; font-weight:650; color:var(--text-primary); font-variant-numeric:tabular-nums; margin:12px 0 0; }
+.absent-head { font-size:17px; font-weight:600; color:var(--text-primary); margin:12px 0 0; }
+.badge { display:inline-block; border:1px solid; border-radius:5px; padding:3px 7px;
+         font-size:var(--font-micro); font-weight:700; text-transform:uppercase; letter-spacing:.05em; white-space:nowrap; }
+.b-raw { background:var(--badge-raw-api-metric-bg); color:var(--badge-raw-api-metric-text); border-color:var(--badge-raw-api-metric-line); }
+.b-calc { background:var(--badge-calculated-bg); color:var(--badge-calculated-text); border-color:var(--badge-calculated-line); }
+.b-est { background:var(--badge-estimate-bg); color:var(--badge-estimate-text); border-color:var(--badge-estimate-line); }
+.b-ai { background:var(--badge-ai-interpretation-bg); color:var(--badge-ai-interpretation-text); border-color:var(--badge-ai-interpretation-line); }
+.chg { margin:10px 0 0; font-size:var(--font-small); font-weight:650; display:flex; gap:6px; align-items:center; }
+.pos { color:var(--positive-text); }
+.neg { color:var(--negative-text); }
+.neu { color:var(--neutral-text); }
+.caveat { color:var(--warn-text); font-size:var(--font-small); margin:8px 0 0; }
+.foot { color:var(--text-muted); font-size:var(--font-small); margin:10px 0 0; }
+details { margin-top:10px; }
+summary { cursor:pointer; font-size:var(--font-small); color:var(--accent); text-decoration:underline; }
+table { width:100%; border-collapse:collapse; margin-top:10px; font-size:var(--font-small); }
+th,td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line-default); vertical-align:top; }
+th { font-size:var(--font-micro); text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); }
+.ai { border:1px solid var(--badge-ai-interpretation-line); background:var(--badge-ai-interpretation-bg);
+      border-radius:10px; padding:16px; margin-top:12px; color:var(--text-secondary); }
+.legend { display:flex; gap:18px; flex-wrap:wrap; font-size:var(--font-small); color:var(--text-muted);
+          margin-top:10px; padding:0; list-style:none; }
+.notcalc { color:var(--text-muted); font-weight:400; }
+.nav { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:18px; }
+.nav a { font-size:var(--font-small); padding:8px 14px; border:1px solid var(--line-default); border-radius:999px;
+         text-decoration:none; color:var(--text-primary); background:var(--surface-card);
+         min-height:40px; display:inline-flex; align-items:center; }
+.nav a.on { background:var(--accent); color:var(--text-on-accent); border-color:var(--accent); }
+.nav a.home { border-style:dashed; }
+.nav span { font-size:var(--font-small); color:var(--text-muted); }
+@media (max-width:640px) { .wrap { padding:16px 12px 56px; } .value { font-size:24px; } }
 </style>
 </head>
 <body>
@@ -294,12 +308,12 @@ function htmlTrend(series: TrendSeries): string {
   const markers = series.points
     .map((point, index) => {
       if (point.state === 'OUTSIDE_COVERAGE') {
-        return `<text x="${x(index).toFixed(1)}" y="${(plotH + 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="#94a3b8">&#215;</text>`;
+        return `<text x="${x(index).toFixed(1)}" y="${(plotH + 4).toFixed(1)}" text-anchor="middle" font-size="12.5" fill="var(--line-strong)">&#215;</text>`;
       }
       if (point.state === 'NO_ACTIVITY') {
-        return `<circle cx="${x(index).toFixed(1)}" cy="${plotH.toFixed(1)}" r="2.5" fill="#fff" stroke="#94a3b8"/>`;
+        return `<circle cx="${x(index).toFixed(1)}" cy="${plotH.toFixed(1)}" r="2.5" fill="var(--surface-card)" stroke="var(--line-strong)"/>`;
       }
-      return `<circle cx="${x(index).toFixed(1)}" cy="${y(point.value as number).toFixed(1)}" r="3.2" fill="#0369a1"><title>${point.date}: ${(point.value as number).toLocaleString('en-US')} (${point.postCount} post(s))</title></circle>`;
+      return `<circle cx="${x(index).toFixed(1)}" cy="${y(point.value as number).toFixed(1)}" r="3.2" fill="var(--accent)"><title>${point.date}: ${(point.value as number).toLocaleString('en-US')} (${point.postCount} post(s))</title></circle>`;
     })
     .join('');
 
@@ -313,13 +327,13 @@ function htmlTrend(series: TrendSeries): string {
   })}</p>
 <svg viewBox="0 0 ${width} ${height}" width="100%" role="img" aria-label="${esc(series.displayName)} per day">
   <g transform="translate(${left},${top})">
-    <line x1="0" y1="${plotH}" x2="${plotW}" y2="${plotH}" stroke="#cbd5e1"/>
-    <text x="-8" y="10" text-anchor="end" font-size="10" fill="#64748b">${max.toLocaleString('en-US')}</text>
-    <text x="-8" y="${plotH}" text-anchor="end" font-size="10" fill="#64748b">0</text>
-    ${segments.map((segment) => `<path d="${segment}" fill="none" stroke="#0369a1" stroke-width="2"/>`).join('')}
+    <line x1="0" y1="${plotH}" x2="${plotW}" y2="${plotH}" stroke="var(--line-default)"/>
+    <text x="-8" y="10" text-anchor="end" font-size="12.5" fill="var(--text-muted)">${max.toLocaleString('en-US')}</text>
+    <text x="-8" y="${plotH}" text-anchor="end" font-size="12.5" fill="var(--text-muted)">0</text>
+    ${segments.map((segment) => `<path d="${segment}" fill="none" stroke="var(--accent)" stroke-width="2"/>`).join('')}
     ${markers}
-    <text x="0" y="${plotH + 18}" font-size="10" fill="#64748b">${series.points[0]?.date ?? ''}</text>
-    <text x="${plotW}" y="${plotH + 18}" text-anchor="end" font-size="10" fill="#64748b">${series.points[series.points.length - 1]?.date ?? ''}</text>
+    <text x="0" y="${plotH + 18}" font-size="12.5" fill="var(--text-muted)">${series.points[0]?.date ?? ''}</text>
+    <text x="${plotW}" y="${plotH + 18}" text-anchor="end" font-size="12.5" fill="var(--text-muted)">${series.points[series.points.length - 1]?.date ?? ''}</text>
   </g>
 </svg>
 <ul class="legend">
@@ -373,31 +387,41 @@ function renderIndex(pages: readonly PageSummary[]): string {
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SNSight - demo</title>
 <style>
-  :root { color-scheme: light; }
-  * { box-sizing: border-box; }
-  body { margin:0; background:#f8fafc; color:#0f172a;
-         font:16px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
-  .wrap { max-width:820px; margin:0 auto; padding:40px 20px 72px; }
-  h1 { font-size:28px; margin:0 0 8px; letter-spacing:-.01em; }
-  h2 { font-size:15px; text-transform:uppercase; letter-spacing:.05em; color:#64748b; margin:40px 0 12px; }
-  p { margin:0 0 12px; }
-  .lede { font-size:18px; color:#334155; }
-  .banner { border:1px solid #fcd34d; background:#fffbeb; color:#78350f;
-            padding:12px 14px; border-radius:6px; margin:20px 0; font-size:14px; }
-  .cards { display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); }
-  a.card { display:block; background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:16px;
-           text-decoration:none; color:inherit; box-shadow:0 1px 2px rgba(15,23,42,.04); }
-  a.card:hover { border-color:#0369a1; }
-  a.card strong { display:block; font-size:17px; margin-bottom:6px; }
-  a.card span { font-size:13px; color:#475569; display:block; }
-  ol,ul { margin:0 0 12px; padding-left:22px; }
-  li { margin-bottom:8px; }
-  table { width:100%; border-collapse:collapse; font-size:14px; margin:8px 0 16px; }
-  th,td { text-align:left; padding:8px; border-bottom:1px solid #e2e8f0; }
-  th { font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:#64748b; }
-  code { background:#f1f5f9; padding:1px 5px; border-radius:4px; font-size:13px; }
-  .small { font-size:13px; color:#475569; }
-  footer { margin-top:48px; padding-top:20px; border-top:1px solid #e2e8f0; font-size:13px; color:#64748b; }
+:root {
+  color-scheme: light;
+${toCssVariables()}
+}
+* { box-sizing: border-box; }
+body { margin:0; background:var(--surface-page); color:var(--text-secondary);
+       font:var(--font-body)/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+.wrap { max-width:840px; margin:0 auto; padding:44px 20px 80px; }
+h1 { font-size:30px; color:var(--text-primary); margin:0 0 10px; letter-spacing:-.015em; }
+h2 { font-size:var(--font-body); text-transform:uppercase; letter-spacing:.06em;
+     color:var(--text-muted); margin:40px 0 14px; }
+h3 { font-size:17px; color:var(--text-primary); margin:0 0 4px; }
+p { margin:0 0 12px; }
+a { color:var(--accent); text-underline-offset:2px; }
+:where(a,summary,button,[tabindex]):focus-visible { outline:2px solid var(--line-focus); outline-offset:2px; border-radius:4px; }
+.lede { font-size:19px; color:var(--text-secondary); }
+.banner { border:1px solid var(--warn-line); background:var(--warn-bg); color:var(--warn-text);
+          padding:14px 16px; border-radius:8px; margin:20px 0; }
+.cards { display:grid; gap:14px; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); }
+a.card { display:block; background:var(--surface-card); border:1px solid var(--line-default); border-radius:10px;
+         padding:18px; text-decoration:none; color:inherit; }
+a.card:hover { border-color:var(--accent); }
+a.card strong { display:block; font-size:18px; color:var(--text-primary); margin-bottom:6px; }
+a.card span { font-size:var(--font-small); color:var(--text-muted); display:block; }
+ol,ul { margin:0 0 12px; padding-left:24px; }
+li { margin-bottom:10px; }
+table { width:100%; border-collapse:collapse; font-size:var(--font-small); margin:10px 0 16px; }
+th,td { text-align:left; padding:9px 10px; border-bottom:1px solid var(--line-default); }
+th { font-size:var(--font-micro); text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); }
+code { background:var(--surface-sunken); color:var(--text-primary); padding:2px 6px; border-radius:4px;
+       font-size:var(--font-small); }
+.small { font-size:var(--font-small); color:var(--text-muted); }
+footer { margin-top:52px; padding-top:22px; border-top:1px solid var(--line-default);
+         font-size:var(--font-small); color:var(--text-muted); }
+@media (max-width:640px) { .wrap { padding:28px 16px 64px; } h1 { font-size:26px; } .lede { font-size:17px; } }
 </style>
 </head>
 <body>
@@ -426,6 +450,17 @@ ${pages
 </div>
 <p class="small">The same account and the same data, across three date ranges. Confidence and the number of
 ranked posts change with the range, which is the intended behaviour: a shorter window is weaker evidence.</p>
+
+<h2>Sign-in screen</h2>
+<p>The account screens are built as a Next.js application with server-side sessions. This page is a
+static rendering of the sign-in layout so the wording and contrast can be reviewed here.</p>
+<div class="cards">
+  <a class="card" href="login.html">
+    <strong>View the sign-in screen</strong>
+    <span>Layout, copy and validation messages</span>
+    <span>Not functional on a static host</span>
+  </a>
+</div>
 
 <h2>What to look at</h2>
 <ol>
@@ -490,6 +525,142 @@ Deterministic: the same seed always produces this page.
 &middot; <a href="${REPO_BLOB}/preview/dashboard.md">Text version</a>
 &middot; <a href="${REPO_TREE}">Source</a>
 </footer>
+
+</div>
+</body>
+</html>`;
+}
+
+// ---------------------------------------------------------------------------
+// Sign-in screen (SCR-001)
+// ---------------------------------------------------------------------------
+
+/**
+ * Static rendering of the sign-in layout.
+ *
+ * The form is deliberately inert: inputs are disabled and there is no action attribute. A static host
+ * has no server, so a form that looked functional would either silently do nothing or, worse, imply
+ * that credentials were being handled. The real implementation is a Next.js server action backed by
+ * argon2 and database-backed sessions.
+ */
+function renderLogin(): string {
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SNSight - sign-in screen preview</title>
+<style>
+:root {
+  color-scheme: light;
+${toCssVariables()}
+}
+* { box-sizing: border-box; }
+body { margin:0; background:var(--surface-page); color:var(--text-secondary);
+       font:var(--font-body)/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+.nav { max-width:1000px; margin:0 auto; padding:20px 20px 0; }
+.nav a { font-size:var(--font-small); padding:8px 14px; border:1px dashed var(--line-default);
+         border-radius:999px; text-decoration:none; color:var(--text-primary);
+         background:var(--surface-card); display:inline-flex; align-items:center; min-height:40px; }
+.shell { max-width:1000px; margin:0 auto; padding:24px 20px 80px; display:grid; gap:36px; }
+@media (min-width:900px) { .shell { grid-template-columns:minmax(0,420px) minmax(0,1fr); align-items:start; } }
+.panel { background:var(--surface-card); border:1px solid var(--line-default); border-radius:12px; padding:28px 24px; }
+h1 { font-size:24px; color:var(--text-primary); margin:0 0 8px; letter-spacing:-.01em; }
+h2 { font-size:var(--font-body); text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); margin:0 0 16px; }
+h3 { font-size:17px; color:var(--text-primary); margin:0 0 4px; }
+p { margin:0 0 12px; }
+a { color:var(--accent); text-underline-offset:2px; }
+label { display:block; margin-bottom:18px; }
+.label { display:block; font-weight:600; color:var(--text-primary); }
+.hint { display:block; font-size:var(--font-small); color:var(--text-muted); margin-top:3px; }
+input { display:block; width:100%; margin-top:8px; border:1px solid var(--line-strong); border-radius:6px;
+        background:var(--surface-card); padding:11px 12px; font-size:var(--font-body); color:var(--text-primary); }
+input:disabled { background:var(--surface-sunken); }
+.btn { display:inline-flex; align-items:center; justify-content:center; width:100%; min-height:44px;
+       border:1px solid var(--accent); border-radius:6px; background:var(--accent); color:var(--text-on-accent);
+       font-size:var(--font-body); font-weight:650; }
+.alert { border:1px solid var(--warn-line); background:var(--warn-bg); color:var(--warn-text);
+         padding:12px 14px; border-radius:6px; margin-bottom:20px; }
+.info { border:1px solid var(--info-line); background:var(--info-bg); color:var(--info-text);
+        padding:14px 16px; border-radius:8px; }
+.small { font-size:var(--font-small); color:var(--text-muted); }
+.divider { border:0; border-top:1px solid var(--line-default); margin:22px 0 16px; }
+ul { margin:0 0 12px; padding-left:22px; } li { margin-bottom:10px; }
+.ok { color:var(--positive-text); font-size:var(--font-small); }
+.req { color:var(--text-muted); font-size:var(--font-small); }
+:where(a,button,input,summary,[tabindex]):focus-visible { outline:2px solid var(--line-focus); outline-offset:2px; border-radius:4px; }
+</style>
+</head>
+<body>
+<div class="nav"><a href="index.html">&larr; Overview</a></div>
+<div class="shell">
+
+  <div class="panel">
+    <p class="alert"><strong>Preview only.</strong> This page is a static rendering. The fields are
+    disabled and nothing is submitted anywhere.</p>
+
+    <h1>Sign in to SNSight</h1>
+    <p>New here? <a href="#">Create an account</a>.</p>
+
+    <form>
+      <label>
+        <span class="label">Email</span>
+        <input type="email" value="jiwon@example.com" disabled>
+      </label>
+      <label>
+        <span class="label">Password</span>
+        <input type="password" value="............" disabled>
+      </label>
+      <button class="btn" type="button" disabled>Sign in</button>
+    </form>
+
+    <p class="small" style="margin-top:14px"><a href="#">Forgotten your password?</a></p>
+    <hr class="divider">
+    <p class="small">Want to look first? <a href="dashboard-30d.html">Open the sample dashboard</a>
+    &mdash; no account needed.</p>
+  </div>
+
+  <div>
+    <h2>What SNSight does</h2>
+    <ul>
+      <li>
+        <h3>Instagram and Threads in one view</h3>
+        <p>Common metrics side by side, plus the ones only one platform reports. Figures that measure
+        different things are never added together.</p>
+      </li>
+      <li>
+        <h3>Every number is traceable</h3>
+        <p>Each metric says whether it came from the platform, was calculated, or is an estimate, and
+        every figure opens the posts behind it.</p>
+      </li>
+      <li>
+        <h3>Analysis that shows its evidence</h3>
+        <p>AI summaries cite the posts they rest on, state the period analysed, and carry a confidence
+        level calculated from how much data exists.</p>
+      </li>
+    </ul>
+
+    <p class="info"><strong>Signing in does not connect an account.</strong> Creating an SNSight account
+    is separate from granting access to your Instagram or Threads data. You will be asked for that
+    afterwards, and you can look around the sample dashboard first.</p>
+
+    <h2 style="margin-top:36px">How the real form behaves</h2>
+    <ul>
+      <li><strong>Failures are indistinguishable.</strong> An unknown email and a wrong password return
+      the same message and cost the same work, so the form cannot be used to discover which addresses
+      have accounts.</li>
+      <li><strong>Requirements are shown before submission.</strong> On the sign-up screen the password
+      rules appear as you type: <span class="req">at least 12 characters, not a common password, not
+      containing your email</span>, then <span class="ok">&#10003; meets the requirements</span>.</li>
+      <li><strong>Repeated attempts lock the account.</strong> Five failures within an hour pause
+      sign-in for 15 minutes, ten for an hour, and the message never says how many attempts remain.</li>
+      <li><strong>Sensitive actions ask again.</strong> Disconnecting an account or changing someone's
+      role requires the password within the last 15 minutes, even in an open session.</li>
+    </ul>
+    <p class="small">Every rule above is enforced by code verified in
+    <code>scripts/verify-auth.ts</code>. What is not yet verified is this markup: the application has
+    never been rendered, because its dependencies cannot be installed where it was written.</p>
+  </div>
 
 </div>
 </body>

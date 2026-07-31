@@ -69,16 +69,16 @@ export function TrendChart({
         aria-label={`${series.displayName} per day. ${values.length} days with activity out of ${series.points.length}.`}
       >
         <g transform={`translate(${padding.left},${padding.top})`}>
-          <line x1={0} y1={plotHeight} x2={plotWidth} y2={plotHeight} stroke="#cbd5e1" strokeWidth={1} />
-          <text x={-8} y={10} textAnchor="end" className="fill-slate-500 text-[10px]">
+          <line x1={0} y1={plotHeight} x2={plotWidth} y2={plotHeight} stroke="var(--line-default)" strokeWidth={1} />
+          <text x={-8} y={10} textAnchor="end" className="fill-slate-500 text-[12.5px]">
             {max.toLocaleString('en-US')}
           </text>
-          <text x={-8} y={plotHeight} textAnchor="end" className="fill-slate-500 text-[10px]">
+          <text x={-8} y={plotHeight} textAnchor="end" className="fill-slate-500 text-[12.5px]">
             0
           </text>
 
           {segments.map((segment, index) => (
-            <path key={index} d={segment} fill="none" stroke="#0369a1" strokeWidth={2} />
+            <path key={index} d={segment} fill="none" stroke="var(--accent)" strokeWidth={2} />
           ))}
 
           {series.points.map((point, index) => (
@@ -91,10 +91,10 @@ export function TrendChart({
             />
           ))}
 
-          <text x={0} y={plotHeight + 18} className="fill-slate-500 text-[10px]">
+          <text x={0} y={plotHeight + 18} className="fill-slate-500 text-[12.5px]">
             {series.points[0]?.date}
           </text>
-          <text x={plotWidth} y={plotHeight + 18} textAnchor="end" className="fill-slate-500 text-[10px]">
+          <text x={plotWidth} y={plotHeight + 18} textAnchor="end" className="fill-slate-500 text-[12.5px]">
             {series.points[series.points.length - 1]?.date}
           </text>
         </g>
@@ -136,20 +136,20 @@ function PointMarker({
 }) {
   if (point.state === 'OUTSIDE_COVERAGE') {
     return (
-      <text x={x} y={y + 4} textAnchor="middle" className="fill-slate-400 text-[10px]" aria-hidden="true">
+      <text x={x} y={y + 4} textAnchor="middle" className="fill-slate-400 text-[12.5px]" aria-hidden="true">
         &#215;
       </text>
     );
   }
 
   if (point.state === 'NO_ACTIVITY') {
-    return <circle cx={x} cy={y} r={2.5} fill="#ffffff" stroke="#94a3b8" strokeWidth={1} />;
+    return <circle cx={x} cy={y} r={2.5} fill="var(--surface-card)" stroke="var(--line-strong)" strokeWidth={1} />;
   }
 
   const label = `${point.date}: ${point.value?.toLocaleString('en-US')} (${point.postCount} post${point.postCount === 1 ? '' : 's'})`;
 
   if (!onSelectDate) {
-    return <circle cx={x} cy={y} r={3} fill="#0369a1" aria-label={label} />;
+    return <circle cx={x} cy={y} r={3} fill="var(--accent)" aria-label={label} />;
   }
 
   return (
@@ -165,7 +165,7 @@ function PointMarker({
     >
       {/* Generous transparent hit area: a 3px dot is not a usable touch target. */}
       <circle cx={x} cy={y} r={12} fill="transparent" />
-      <circle cx={x} cy={y} r={3.5} fill="#0369a1" />
+      <circle cx={x} cy={y} r={3.5} fill="var(--accent)" />
     </g>
   );
 }

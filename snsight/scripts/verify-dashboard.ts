@@ -256,9 +256,10 @@ check('the Threads coverage notice names the platform limit', () => {
 
 // ---------------------------------------------------------------------------
 // Drill-down (FR-009)
+//
+// Uses `allRows` from the top of the file: the ranked extremes alone are not enough, because a
+// drill-down must reach every post in the period, not only the ones the dashboard displays.
 // ---------------------------------------------------------------------------
-
-const rows: ContentRow[] = [...model.bestContent, ...model.worstContent];
 
 check('every KPI that content can explain offers a drill-down', () => {
   for (const card of model.platformSections.flatMap((section) => section.kpis)) {

@@ -5,48 +5,102 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SNSight - unified dashboard preview (30 days)</title>
 <style>
-  :root { color-scheme: light; }
-  * { box-sizing: border-box; }
-  body { margin:0; background:#f8fafc; color:#0f172a;
-         font:15px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
-  .wrap { max-width:1100px; margin:0 auto; padding:24px 16px 64px; }
-  h1 { font-size:20px; margin:0 0 4px; }
-  h2 { font-size:12px; text-transform:uppercase; letter-spacing:.05em; color:#64748b; margin:32px 0 12px; }
-  h3 { font-size:14px; margin:0; }
-  .banner { border:1px solid #fcd34d; background:#fffbeb; color:#78350f;
-            padding:10px 12px; border-radius:6px; margin-bottom:16px; font-size:14px; }
-  .muted { color:#475569; font-size:13px; }
-  .small { font-size:12px; color:#475569; }
-  .grid { display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); }
-  .card { background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:14px;
-          box-shadow:0 1px 2px rgba(15,23,42,.04); }
-  .card-head { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
-  .value { font-size:24px; font-weight:600; font-variant-numeric:tabular-nums; margin:10px 0 0; }
-  .absent-head { font-size:15px; font-weight:600; color:#334155; margin:10px 0 0; }
-  .badge { display:inline-block; border:1px solid; border-radius:4px; padding:2px 6px;
-           font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; white-space:nowrap; }
-  .b-raw { background:#f1f5f9; color:#334155; border-color:#cbd5e1; }
-  .b-calc { background:#f0f9ff; color:#075985; border-color:#7dd3fc; }
-  .b-est { background:#fffbeb; color:#78350f; border-color:#fcd34d; }
-  .b-ai { background:#f5f3ff; color:#4c1d95; border-color:#c4b5fd; }
-  .chg { margin:8px 0 0; font-size:12px; font-weight:600; display:flex; gap:4px; align-items:center; }
-  .pos { color:#065f46; } .neg { color:#9f1239; } .neu { color:#475569; }
-  .caveat { color:#78350f; font-size:12px; margin:6px 0 0; }
-  .foot { color:#64748b; font-size:12px; margin:8px 0 0; }
-  details { margin-top:8px; }
-  summary { cursor:pointer; font-size:12px; color:#0369a1; }
-  table { width:100%; border-collapse:collapse; margin-top:8px; font-size:13px; }
-  th,td { text-align:left; padding:6px 8px; border-bottom:1px solid #e2e8f0; vertical-align:top; }
-  th { font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:#64748b; }
-  .ai { border:1px solid #ddd6fe; background:#faf5ff; border-radius:8px; padding:14px; margin-top:12px; }
-  .legend { display:flex; gap:16px; flex-wrap:wrap; font-size:12px; color:#475569; margin-top:8px; padding:0; list-style:none; }
-  .notcalc { color:#64748b; font-weight:400; }
-  .nav { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:16px; }
-  .nav a { font-size:13px; padding:5px 11px; border:1px solid #cbd5e1; border-radius:999px;
-           text-decoration:none; color:#0f172a; background:#fff; }
-  .nav a.on { background:#0369a1; color:#fff; border-color:#0369a1; }
-  .nav a.home { border-style:dashed; }
-  .nav span { font-size:12px; color:#64748b; }
+:root {
+  color-scheme: light;
+  --surface-page: #f4f6fa;
+  --surface-card: #ffffff;
+  --surface-sunken: #e9eef5;
+  --surface-inverse: #111a2b;
+  --text-primary: #0f1729;
+  --text-secondary: #2c3849;
+  --text-muted: #4a5769;
+  --text-on-inverse: #f7f9fc;
+  --text-on-accent: #ffffff;
+  --line-default: #808d9e;
+  --line-strong: #5b6879;
+  --line-focus: #0a539b;
+  --accent: #0a539b;
+  --accent-hover: #083f78;
+  --accent-subtle-bg: #e8f0fa;
+  --accent-subtle-text: #083f78;
+  --positive-text: #0b5133;
+  --positive-bg: #e3f3ea;
+  --negative-text: #8c1c2b;
+  --negative-bg: #fbe9ec;
+  --neutral-text: #3f4a5c;
+  --neutral-bg: #eceff4;
+  --warn-text: #6b3a05;
+  --warn-bg: #fdf3e2;
+  --warn-line: #6b3a05;
+  --info-text: #0c4a6e;
+  --info-bg: #e6f3fa;
+  --info-line: #0c4a6e;
+  --font-body: 16px;
+  --font-small: 14px;
+  --font-micro: 12.5px;
+  --badge-raw-api-metric-bg: #eaeef4;
+  --badge-raw-api-metric-text: #26313f;
+  --badge-raw-api-metric-line: #26313f;
+  --badge-calculated-bg: #e6f0fb;
+  --badge-calculated-text: #0a4a86;
+  --badge-calculated-line: #0a4a86;
+  --badge-estimate-bg: #fdf1e0;
+  --badge-estimate-text: #6b3a05;
+  --badge-estimate-line: #6b3a05;
+  --badge-ai-interpretation-bg: #f0eafb;
+  --badge-ai-interpretation-text: #4b2382;
+  --badge-ai-interpretation-line: #4b2382;
+}
+* { box-sizing: border-box; }
+body { margin:0; background:var(--surface-page); color:var(--text-secondary);
+       font:var(--font-body)/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+.wrap { max-width:1140px; margin:0 auto; padding:24px 16px 72px; }
+h1 { font-size:24px; color:var(--text-primary); margin:0 0 6px; letter-spacing:-.01em; }
+h2 { font-size:var(--font-small); text-transform:uppercase; letter-spacing:.06em;
+     color:var(--text-muted); margin:36px 0 12px; }
+h3 { font-size:16px; color:var(--text-primary); margin:0; }
+p { margin:0 0 10px; }
+a { color:var(--accent); text-underline-offset:2px; }
+:where(a,summary,[tabindex]):focus-visible { outline:2px solid var(--line-focus); outline-offset:2px; border-radius:3px; }
+.banner { border:1px solid var(--warn-line); background:var(--warn-bg); color:var(--warn-text);
+          padding:12px 14px; border-radius:6px; margin-bottom:18px; }
+.muted { color:var(--text-secondary); }
+.small { font-size:var(--font-small); color:var(--text-muted); }
+.grid { display:grid; gap:14px; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); }
+.card { background:var(--surface-card); border:1px solid var(--line-default); border-radius:10px; padding:16px; }
+.card-head { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+.value { font-size:28px; font-weight:650; color:var(--text-primary); font-variant-numeric:tabular-nums; margin:12px 0 0; }
+.absent-head { font-size:17px; font-weight:600; color:var(--text-primary); margin:12px 0 0; }
+.badge { display:inline-block; border:1px solid; border-radius:5px; padding:3px 7px;
+         font-size:var(--font-micro); font-weight:700; text-transform:uppercase; letter-spacing:.05em; white-space:nowrap; }
+.b-raw { background:var(--badge-raw-api-metric-bg); color:var(--badge-raw-api-metric-text); border-color:var(--badge-raw-api-metric-line); }
+.b-calc { background:var(--badge-calculated-bg); color:var(--badge-calculated-text); border-color:var(--badge-calculated-line); }
+.b-est { background:var(--badge-estimate-bg); color:var(--badge-estimate-text); border-color:var(--badge-estimate-line); }
+.b-ai { background:var(--badge-ai-interpretation-bg); color:var(--badge-ai-interpretation-text); border-color:var(--badge-ai-interpretation-line); }
+.chg { margin:10px 0 0; font-size:var(--font-small); font-weight:650; display:flex; gap:6px; align-items:center; }
+.pos { color:var(--positive-text); }
+.neg { color:var(--negative-text); }
+.neu { color:var(--neutral-text); }
+.caveat { color:var(--warn-text); font-size:var(--font-small); margin:8px 0 0; }
+.foot { color:var(--text-muted); font-size:var(--font-small); margin:10px 0 0; }
+details { margin-top:10px; }
+summary { cursor:pointer; font-size:var(--font-small); color:var(--accent); text-decoration:underline; }
+table { width:100%; border-collapse:collapse; margin-top:10px; font-size:var(--font-small); }
+th,td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line-default); vertical-align:top; }
+th { font-size:var(--font-micro); text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); }
+.ai { border:1px solid var(--badge-ai-interpretation-line); background:var(--badge-ai-interpretation-bg);
+      border-radius:10px; padding:16px; margin-top:12px; color:var(--text-secondary); }
+.legend { display:flex; gap:18px; flex-wrap:wrap; font-size:var(--font-small); color:var(--text-muted);
+          margin-top:10px; padding:0; list-style:none; }
+.notcalc { color:var(--text-muted); font-weight:400; }
+.nav { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:18px; }
+.nav a { font-size:var(--font-small); padding:8px 14px; border:1px solid var(--line-default); border-radius:999px;
+         text-decoration:none; color:var(--text-primary); background:var(--surface-card);
+         min-height:40px; display:inline-flex; align-items:center; }
+.nav a.on { background:var(--accent); color:var(--text-on-accent); border-color:var(--accent); }
+.nav a.home { border-style:dashed; }
+.nav span { font-size:var(--font-small); color:var(--text-muted); }
+@media (max-width:640px) { .wrap { padding:16px 12px 56px; } .value { font-size:24px; } }
 </style>
 </head>
 <body>
@@ -373,13 +427,13 @@
   <p class="small"><strong>Views by day</strong> <span class="badge b-raw">From platform</span></p>
 <svg viewBox="0 0 720 170" width="100%" role="img" aria-label="Views per day">
   <g transform="translate(46,10)">
-    <line x1="0" y1="130" x2="662" y2="130" stroke="#cbd5e1"/>
-    <text x="-8" y="10" text-anchor="end" font-size="10" fill="#64748b">134,715</text>
-    <text x="-8" y="130" text-anchor="end" font-size="10" fill="#64748b">0</text>
-    <path d="M137.0,50.5 L159.8,63.4" fill="none" stroke="#0369a1" stroke-width="2"/><path d="M319.6,60.3 L342.4,47.0 L365.2,84.2" fill="none" stroke="#0369a1" stroke-width="2"/><path d="M433.7,47.8 L456.6,98.4 L479.4,99.6" fill="none" stroke="#0369a1" stroke-width="2"/><path d="M639.2,121.1 L662.0,0.0" fill="none" stroke="#0369a1" stroke-width="2"/>
-    <circle cx="0.0" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="22.8" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="45.7" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="68.5" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="91.3" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="114.1" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="137.0" cy="50.5" r="3.2" fill="#0369a1"><title>2026-07-08: 82,426 (2 post(s))</title></circle><circle cx="159.8" cy="63.4" r="3.2" fill="#0369a1"><title>2026-07-09: 69,031 (1 post(s))</title></circle><circle cx="182.6" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="205.4" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="228.3" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="251.1" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="273.9" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="296.8" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="319.6" cy="60.3" r="3.2" fill="#0369a1"><title>2026-07-16: 72,204 (2 post(s))</title></circle><circle cx="342.4" cy="47.0" r="3.2" fill="#0369a1"><title>2026-07-17: 86,021 (2 post(s))</title></circle><circle cx="365.2" cy="84.2" r="3.2" fill="#0369a1"><title>2026-07-18: 47,467 (1 post(s))</title></circle><circle cx="388.1" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="410.9" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="433.7" cy="47.8" r="3.2" fill="#0369a1"><title>2026-07-21: 85,155 (2 post(s))</title></circle><circle cx="456.6" cy="98.4" r="3.2" fill="#0369a1"><title>2026-07-22: 32,775 (1 post(s))</title></circle><circle cx="479.4" cy="99.6" r="3.2" fill="#0369a1"><title>2026-07-23: 31,534 (2 post(s))</title></circle><circle cx="502.2" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="525.0" cy="116.7" r="3.2" fill="#0369a1"><title>2026-07-25: 13,749 (2 post(s))</title></circle><circle cx="547.9" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="570.7" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="593.5" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="616.3" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="639.2" cy="121.1" r="3.2" fill="#0369a1"><title>2026-07-30: 9,227 (2 post(s))</title></circle><circle cx="662.0" cy="0.0" r="3.2" fill="#0369a1"><title>2026-07-31: 134,715 (2 post(s))</title></circle>
-    <text x="0" y="148" font-size="10" fill="#64748b">2026-07-02</text>
-    <text x="662" y="148" text-anchor="end" font-size="10" fill="#64748b">2026-07-31</text>
+    <line x1="0" y1="130" x2="662" y2="130" stroke="var(--line-default)"/>
+    <text x="-8" y="10" text-anchor="end" font-size="12.5" fill="var(--text-muted)">134,715</text>
+    <text x="-8" y="130" text-anchor="end" font-size="12.5" fill="var(--text-muted)">0</text>
+    <path d="M137.0,50.5 L159.8,63.4" fill="none" stroke="var(--accent)" stroke-width="2"/><path d="M319.6,60.3 L342.4,47.0 L365.2,84.2" fill="none" stroke="var(--accent)" stroke-width="2"/><path d="M433.7,47.8 L456.6,98.4 L479.4,99.6" fill="none" stroke="var(--accent)" stroke-width="2"/><path d="M639.2,121.1 L662.0,0.0" fill="none" stroke="var(--accent)" stroke-width="2"/>
+    <circle cx="0.0" cy="130.0" r="2.5" fill="var(--surface-card)" stroke="var(--line-strong)"/><circle cx="22.8" cy="130.0" r="2.5" fill="var(--surface-card)" stroke="var(--line-strong)"/><circle cx="45.7" cy="130.0" r="2.5" fill="var(--surface-card)" stroke="var(--line-strong)"/><circle cx="68.5" cy="130.0" r="2.5" fill="var(--surface-card)" stroke="var(--line-strong)"/><circle cx="91.3" cy="130.0" r="2.5" fill="var(--surface-card)" stroke="var(--line-strong)"/><circle cx="114.1" cy="130.0" r="2.5" fill="var(--surface-card)" stroke="var(--line-strong)"/><circle cx="137.0" cy="50.5" r="3.2" fill="var(--accent)"><title>2026-07-08: 82,426 (2 post(s))</title></circle><circle cx="159.8" cy="63.4" r="3.2" fill="var(--accent)"><title>2026-07-09: 69,031 (1 post(s))</title></circle><circle cx="182.6" cy="130.0" r="2.5" fill="var(--surface-card)" stroke="var(--line-strong)"/><circle cx="205.4" cy="130.0" r="2.5" fill="var(--surface-card)" stroke="var(--line-strong)"/><circle cx="228.3" cy="130.0" r="2.5" fill="var(--surface-card)" stroke="var(--line-strong)"/><circle cx="251.1" cy="130.0" r="2.5" fill="var(--surface-card)" stroke="var(--line-strong)"/><circle cx="273.9" cy="130.0" r="2.5" fill="var(--surface-card)" stroke="var(--line-strong)"/><circle cx="296.8" cy="130.0" r="2.5" fill="var(--surface-card)" stroke="var(--line-strong)"/><circle cx="319.6" cy="60.3" r="3.2" fill="var(--accent)"><title>2026-07-16: 72,204 (2 post(s))</title></circle><circle cx="342.4" cy="47.0" r="3.2" fill="var(--accent)"><title>2026-07-17: 86,021 (2 post(s))</title></circle><circle cx="365.2" cy="84.2" r="3.2" fill="var(--accent)"><title>2026-07-18: 47,467 (1 post(s))</title></circle><circle cx="388.1" cy="130.0" r="2.5" fill="var(--surface-card)" stroke="var(--line-strong)"/><circle cx="410.9" cy="130.0" r="2.5" fill="var(--surface-card)" stroke="var(--line-strong)"/><circle cx="433.7" cy="47.8" r="3.2" fill="var(--accent)"><title>2026-07-21: 85,155 (2 post(s))</title></circle><circle cx="456.6" cy="98.4" r="3.2" fill="var(--accent)"><title>2026-07-22: 32,775 (1 post(s))</title></circle><circle cx="479.4" cy="99.6" r="3.2" fill="var(--accent)"><title>2026-07-23: 31,534 (2 post(s))</title></circle><circle cx="502.2" cy="130.0" r="2.5" fill="var(--surface-card)" stroke="var(--line-strong)"/><circle cx="525.0" cy="116.7" r="3.2" fill="var(--accent)"><title>2026-07-25: 13,749 (2 post(s))</title></circle><circle cx="547.9" cy="130.0" r="2.5" fill="var(--surface-card)" stroke="var(--line-strong)"/><circle cx="570.7" cy="130.0" r="2.5" fill="var(--surface-card)" stroke="var(--line-strong)"/><circle cx="593.5" cy="130.0" r="2.5" fill="var(--surface-card)" stroke="var(--line-strong)"/><circle cx="616.3" cy="130.0" r="2.5" fill="var(--surface-card)" stroke="var(--line-strong)"/><circle cx="639.2" cy="121.1" r="3.2" fill="var(--accent)"><title>2026-07-30: 9,227 (2 post(s))</title></circle><circle cx="662.0" cy="0.0" r="3.2" fill="var(--accent)"><title>2026-07-31: 134,715 (2 post(s))</title></circle>
+    <text x="0" y="148" font-size="12.5" fill="var(--text-muted)">2026-07-02</text>
+    <text x="662" y="148" text-anchor="end" font-size="12.5" fill="var(--text-muted)">2026-07-31</text>
   </g>
 </svg>
 <ul class="legend">
@@ -598,13 +652,13 @@
   <p class="small"><strong>Views by day</strong> <span class="badge b-raw">From platform</span></p>
 <svg viewBox="0 0 720 170" width="100%" role="img" aria-label="Views per day">
   <g transform="translate(46,10)">
-    <line x1="0" y1="130" x2="662" y2="130" stroke="#cbd5e1"/>
-    <text x="-8" y="10" text-anchor="end" font-size="10" fill="#64748b">113,228</text>
-    <text x="-8" y="130" text-anchor="end" font-size="10" fill="#64748b">0</text>
-    <path d="M319.6,129.8 L342.4,108.6 L365.2,124.6 L388.1,19.0" fill="none" stroke="#0369a1" stroke-width="2"/><path d="M570.7,82.1 L593.5,59.7" fill="none" stroke="#0369a1" stroke-width="2"/><path d="M639.2,112.8 L662.0,0.0" fill="none" stroke="#0369a1" stroke-width="2"/>
-    <circle cx="0.0" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="22.8" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="45.7" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="68.5" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="91.3" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="114.1" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="137.0" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="159.8" cy="101.3" r="3.2" fill="#0369a1"><title>2026-07-09: 24,957 (1 post(s))</title></circle><circle cx="182.6" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="205.4" cy="41.7" r="3.2" fill="#0369a1"><title>2026-07-11: 76,935 (1 post(s))</title></circle><circle cx="228.3" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="251.1" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="273.9" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="296.8" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="319.6" cy="129.8" r="3.2" fill="#0369a1"><title>2026-07-16: 174 (1 post(s))</title></circle><circle cx="342.4" cy="108.6" r="3.2" fill="#0369a1"><title>2026-07-17: 18,651 (2 post(s))</title></circle><circle cx="365.2" cy="124.6" r="3.2" fill="#0369a1"><title>2026-07-18: 4,679 (1 post(s))</title></circle><circle cx="388.1" cy="19.0" r="3.2" fill="#0369a1"><title>2026-07-19: 96,720 (2 post(s))</title></circle><circle cx="410.9" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="433.7" cy="129.8" r="3.2" fill="#0369a1"><title>2026-07-21: 175 (1 post(s))</title></circle><circle cx="456.6" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="479.4" cy="104.2" r="3.2" fill="#0369a1"><title>2026-07-23: 22,481 (2 post(s))</title></circle><circle cx="502.2" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="525.0" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="547.9" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="570.7" cy="82.1" r="3.2" fill="#0369a1"><title>2026-07-27: 41,686 (1 post(s))</title></circle><circle cx="593.5" cy="59.7" r="3.2" fill="#0369a1"><title>2026-07-28: 61,187 (1 post(s))</title></circle><circle cx="616.3" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="639.2" cy="112.8" r="3.2" fill="#0369a1"><title>2026-07-30: 14,964 (1 post(s))</title></circle><circle cx="662.0" cy="0.0" r="3.2" fill="#0369a1"><title>2026-07-31: 113,228 (2 post(s))</title></circle>
-    <text x="0" y="148" font-size="10" fill="#64748b">2026-07-02</text>
-    <text x="662" y="148" text-anchor="end" font-size="10" fill="#64748b">2026-07-31</text>
+    <line x1="0" y1="130" x2="662" y2="130" stroke="var(--line-default)"/>
+    <text x="-8" y="10" text-anchor="end" font-size="12.5" fill="var(--text-muted)">113,228</text>
+    <text x="-8" y="130" text-anchor="end" font-size="12.5" fill="var(--text-muted)">0</text>
+    <path d="M319.6,129.8 L342.4,108.6 L365.2,124.6 L388.1,19.0" fill="none" stroke="var(--accent)" stroke-width="2"/><path d="M570.7,82.1 L593.5,59.7" fill="none" stroke="var(--accent)" stroke-width="2"/><path d="M639.2,112.8 L662.0,0.0" fill="none" stroke="var(--accent)" stroke-width="2"/>
+    <circle cx="0.0" cy="130.0" r="2.5" fill="var(--surface-card)" stroke="var(--line-strong)"/><circle cx="22.8" cy="130.0" r="2.5" fill="var(--surface-card)" stroke="var(--line-strong)"/><circle cx="45.7" cy="130.0" r="2.5" fill="var(--surface-card)" stroke="var(--line-strong)"/><circle cx="68.5" cy="130.0" r="2.5" fill="var(--surface-card)" stroke="var(--line-strong)"/><circle cx="91.3" cy="130.0" r="2.5" fill="var(--surface-card)" stroke="var(--line-strong)"/><circle cx="114.1" cy="130.0" r="2.5" fill="var(--surface-card)" stroke="var(--line-strong)"/><circle cx="137.0" cy="130.0" r="2.5" fill="var(--surface-card)" stroke="var(--line-strong)"/><circle cx="159.8" cy="101.3" r="3.2" fill="var(--accent)"><title>2026-07-09: 24,957 (1 post(s))</title></circle><circle cx="182.6" cy="130.0" r="2.5" fill="var(--surface-card)" stroke="var(--line-strong)"/><circle cx="205.4" cy="41.7" r="3.2" fill="var(--accent)"><title>2026-07-11: 76,935 (1 post(s))</title></circle><circle cx="228.3" cy="130.0" r="2.5" fill="var(--surface-card)" stroke="var(--line-strong)"/><circle cx="251.1" cy="130.0" r="2.5" fill="var(--surface-card)" stroke="var(--line-strong)"/><circle cx="273.9" cy="130.0" r="2.5" fill="var(--surface-card)" stroke="var(--line-strong)"/><circle cx="296.8" cy="130.0" r="2.5" fill="var(--surface-card)" stroke="var(--line-strong)"/><circle cx="319.6" cy="129.8" r="3.2" fill="var(--accent)"><title>2026-07-16: 174 (1 post(s))</title></circle><circle cx="342.4" cy="108.6" r="3.2" fill="var(--accent)"><title>2026-07-17: 18,651 (2 post(s))</title></circle><circle cx="365.2" cy="124.6" r="3.2" fill="var(--accent)"><title>2026-07-18: 4,679 (1 post(s))</title></circle><circle cx="388.1" cy="19.0" r="3.2" fill="var(--accent)"><title>2026-07-19: 96,720 (2 post(s))</title></circle><circle cx="410.9" cy="130.0" r="2.5" fill="var(--surface-card)" stroke="var(--line-strong)"/><circle cx="433.7" cy="129.8" r="3.2" fill="var(--accent)"><title>2026-07-21: 175 (1 post(s))</title></circle><circle cx="456.6" cy="130.0" r="2.5" fill="var(--surface-card)" stroke="var(--line-strong)"/><circle cx="479.4" cy="104.2" r="3.2" fill="var(--accent)"><title>2026-07-23: 22,481 (2 post(s))</title></circle><circle cx="502.2" cy="130.0" r="2.5" fill="var(--surface-card)" stroke="var(--line-strong)"/><circle cx="525.0" cy="130.0" r="2.5" fill="var(--surface-card)" stroke="var(--line-strong)"/><circle cx="547.9" cy="130.0" r="2.5" fill="var(--surface-card)" stroke="var(--line-strong)"/><circle cx="570.7" cy="82.1" r="3.2" fill="var(--accent)"><title>2026-07-27: 41,686 (1 post(s))</title></circle><circle cx="593.5" cy="59.7" r="3.2" fill="var(--accent)"><title>2026-07-28: 61,187 (1 post(s))</title></circle><circle cx="616.3" cy="130.0" r="2.5" fill="var(--surface-card)" stroke="var(--line-strong)"/><circle cx="639.2" cy="112.8" r="3.2" fill="var(--accent)"><title>2026-07-30: 14,964 (1 post(s))</title></circle><circle cx="662.0" cy="0.0" r="3.2" fill="var(--accent)"><title>2026-07-31: 113,228 (2 post(s))</title></circle>
+    <text x="0" y="148" font-size="12.5" fill="var(--text-muted)">2026-07-02</text>
+    <text x="662" y="148" text-anchor="end" font-size="12.5" fill="var(--text-muted)">2026-07-31</text>
   </g>
 </svg>
 <ul class="legend">

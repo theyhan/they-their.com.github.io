@@ -35,6 +35,10 @@ sign-off:
 | `src/lib/metrics/` | Registry, per-platform formulas, performance index, confidence rubric. Verified by execution |
 | `src/lib/platform/` | Provider contract, error translation, deterministic fixture backend. Verified by execution |
 | `src/lib/dashboard/` | Unified dashboard view model, formatting, drill-down resolution. Verified by execution |
+| `src/lib/design/` | Colour and type tokens, with WCAG contrast enforced by a check. Verified by execution |
+| `src/lib/auth/` | Roles and capabilities, password policy, login throttling, sessions, onboarding. Verified by execution |
+| `src/lib/auth/service.ts`, `current-user.ts` | Sign-in, sign-up, session and audit orchestration. **Never run** - needs a database |
+| `src/app/(auth)/`, `src/middleware.ts` | Sign-in and sign-up screens, server actions, route guard. Types check against stubs only |
 | `src/components/dashboard/`, `src/app/` | React rendering of the view model. Transpiles; **types unverified** - React is not installed |
 | `preview/` | Static render of the dashboard for review before install |
 | `prisma/seed.ts` | Seeds `metric_definitions` from the code registry. Unrun |
@@ -80,6 +84,15 @@ The current render exercises all four metric states - 244 plain values, 4 disclo
 - **Nothing is pooled across platforms unless the definitions match.** Post counts and followers are
   combined; views, reach, interactions and engagement rates stay per platform, with the performance
   index as the only cross-platform comparator (spec 6.4, ADR-0004).
+- **Colours live in `src/lib/design/tokens.ts` and nowhere else.** Every pair the UI renders is
+  registered there and checked against its WCAG minimum, and `globals.css` is generated from it by
+  `npm run tokens:css`. A hand-edited colour in a component is a colour nobody verified.
+- **Authorisation is decided only in `src/lib/auth/permissions.ts`.** Ask `can(role, capability)` or
+  `authorize(...)`. Comparing role strings at a call site is how a permission gets missed when a fifth
+  role appears.
+- **Login identity is not data access.** `auth_accounts` proves who someone is; `oauth_connections`
+  grants access to Instagram or Threads data. Nothing joins them, and sign-in never requests an
+  insights scope (ADR-0008).
 
 ## Local setup
 
@@ -109,8 +122,25 @@ npm run db:seed                # populates metric_definitions from the registry
 
 Be precise about what has been checked, because a passing local run is not integration confidence.
 
-**Verified by execution** - 66 checks passing across `scripts/verify-core.ts` (37) and
-`scripts/verify-dashboard.ts` (29).
+**Verified by execution** - 126 checks passing: `verify-core.ts` (37), `verify-dashboard.ts` (29),
+`verify-design.ts` (12) and `verify-auth.ts` (48).
+
+From the auth layer, the invariants most likely to be lost in a later refactor:
+
+- A viewer cannot export. Bulk egress is a separate capability from reading.
+- An admin cannot mint owners, including themselves, and cannot modify an owner.
+- A workspace cannot be left without an owner, including by the last owner demoting themselves.
+- Absent evidence of recent authentication is treated as stale, never as fresh, so omitting the field
+  cannot grant a sensitive action.
+- `accountScope` restricts data for every role, owners included.
+- An unknown email and a wrong password return the same message and cost the same hashing work, so the
+  form is not an account-enumeration oracle.
+- An escalated lockout holds for its full hour. An earlier version counted failures over 15 minutes
+  while locking for 60, so the lockout silently expired early; the check now covers it.
+
+From the design layer: every registered colour pair meets its WCAG minimum (lowest is 3.12:1 for
+borders, which need 3:1; all body text is 6.3:1 or better), no text style falls below 14px, and
+`globals.css` is compared against the token source so the verified palette is the one that renders.
 
 From the dashboard layer:
 

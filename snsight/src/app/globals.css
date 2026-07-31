@@ -3,12 +3,145 @@
 @tailwind utilities;
 
 /*
- * Change must remain legible without colour (spec section 7), so nothing here encodes meaning in
- * hue alone. Under forced-colours mode the glyphs and sentences still carry it.
+ * Colour and type tokens.
+ *
+ * Generated from src/lib/design/tokens.ts by `npm run tokens:css`, and verified by
+ * scripts/verify-design.ts: every pair below is checked against its WCAG 2.1 minimum, so a change that
+ * makes text harder to read fails a check rather than shipping.
+ *
+ * Do not hand-edit the block between the markers.
  */
+
+/* tokens:start */
+:root {
+  --surface-page: #f4f6fa;
+  --surface-card: #ffffff;
+  --surface-sunken: #e9eef5;
+  --surface-inverse: #111a2b;
+  --text-primary: #0f1729;
+  --text-secondary: #2c3849;
+  --text-muted: #4a5769;
+  --text-on-inverse: #f7f9fc;
+  --text-on-accent: #ffffff;
+  --line-default: #808d9e;
+  --line-strong: #5b6879;
+  --line-focus: #0a539b;
+  --accent: #0a539b;
+  --accent-hover: #083f78;
+  --accent-subtle-bg: #e8f0fa;
+  --accent-subtle-text: #083f78;
+  --positive-text: #0b5133;
+  --positive-bg: #e3f3ea;
+  --negative-text: #8c1c2b;
+  --negative-bg: #fbe9ec;
+  --neutral-text: #3f4a5c;
+  --neutral-bg: #eceff4;
+  --warn-text: #6b3a05;
+  --warn-bg: #fdf3e2;
+  --warn-line: #6b3a05;
+  --info-text: #0c4a6e;
+  --info-bg: #e6f3fa;
+  --info-line: #0c4a6e;
+  --font-body: 16px;
+  --font-small: 14px;
+  --font-micro: 12.5px;
+  --badge-raw-api-metric-bg: #eaeef4;
+  --badge-raw-api-metric-text: #26313f;
+  --badge-raw-api-metric-line: #26313f;
+  --badge-calculated-bg: #e6f0fb;
+  --badge-calculated-text: #0a4a86;
+  --badge-calculated-line: #0a4a86;
+  --badge-estimate-bg: #fdf1e0;
+  --badge-estimate-text: #6b3a05;
+  --badge-estimate-line: #6b3a05;
+  --badge-ai-interpretation-bg: #f0eafb;
+  --badge-ai-interpretation-text: #4b2382;
+  --badge-ai-interpretation-line: #4b2382;
+}
+/* tokens:end */
+
+:root {
+  --font-h1: 24px;
+  --font-h2: 19px;
+}
+
+html {
+  /* 16px base rather than the 12-13px common in dense dashboards. Density is not worth illegibility. */
+  font-size: 100%;
+}
+
+body {
+  background: var(--surface-page);
+  color: var(--text-secondary);
+  font-size: var(--font-body);
+  line-height: 1.55;
+}
+
+/* A visible focus ring on every interactive element, at 3:1 against both surfaces. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--line-focus);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+@layer components {
+  .snsight-input {
+    display: block;
+    width: 100%;
+    border: 1px solid var(--line-strong);
+    border-radius: 6px;
+    background: var(--surface-card);
+    padding: 0.625rem 0.75rem;
+    font-size: var(--font-body);
+    color: var(--text-primary);
+  }
+
+  .snsight-button-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    /* 44px minimum touch target: the dashboards must stay usable on a phone. */
+    min-height: 44px;
+    border-radius: 6px;
+    background: var(--accent);
+    padding: 0.625rem 1.25rem;
+    font-size: var(--font-body);
+    font-weight: 600;
+    color: var(--text-on-accent);
+  }
+
+  .snsight-button-primary:hover:not(:disabled) {
+    background: var(--accent-hover);
+  }
+
+  .snsight-button-primary:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+
+  .snsight-link {
+    color: var(--accent);
+    /* Underlined, so a link is not identified by colour alone. */
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  * {
+  *,
+  *::before,
+  *::after {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
+  }
+}
+
+/*
+ * Forced-colours mode discards the palette. Meaning survives because it never lived in the colour:
+ * change carries a glyph and a sentence, and absent values carry a heading and an explanation.
+ */
+@media (forced-colors: active) {
+  .snsight-button-primary {
+    border: 1px solid ButtonText;
   }
 }
