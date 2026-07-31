@@ -1,0 +1,547 @@
+// ModelRoom data model — implements spec-v1.1.md
+// Money: BigInt micro-USD (1 USD = 1_000_000). Never Float, never Decimal in hot paths.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Identity & tenancy ────────────────────────────────────────────────────────
+
+model User {
+  id         String            @id @default(cuid())
+  email      String            @unique
+  plan       Plan              @default(FREE)
+  locale     String            @default("en")
+  createdAt  DateTime          @default(now())
+  ownedSpaces Workspace[]
+  memberships WorkspaceMember[]
+}
+
+model Workspace {
+  id       String            @id @default(cuid())
+  ownerId  String
+  name     String
+  owner    User              @relation(fields: [ownerId], references: [id])
+  members  WorkspaceMember[]
+  projects Project[]
+  creds    ProviderCredential[]
+}
+
+// D8: §15.3 per-user authorization needs this edge. Project.workspaceId alone
+// cannot answer "may this user read this file".
+model WorkspaceMember {
+  workspaceId String
+  userId      String
+  role        MemberRole @default(MEMBER)
+  createdAt   DateTime   @default(now())
+  workspace   Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([workspaceId, userId])
+  @@index([userId])
+}
+
+enum Plan {
+  FREE
+  PRO
+  TEAM
+}
+
+enum MemberRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+// ─── Model configuration (§9.2: config-driven, never hardcoded) ────────────────
+
+model ModelConfig {
+  id                      String   @id @default(cuid())
+  provider                Provider
+  // Provider-side model identifier, e.g. the string sent in the API request.
+  modelId                 String
+  displayName             String
+  enabled                 Boolean  @default(true)
+  inputPriceMicrosPerToken  BigInt
+  outputPriceMicrosPerToken BigInt
+  contextLimitTokens      Int
+  maxOutputTokens         Int
+  // { "coding": 0.9, "image_understanding": 0.4, ... } -> D5 capability factor
+  capabilities            Json
+  // D5: prior for Bayesian quality shrinkage, per capability tag
+  capabilityPriors        Json
+  supportsStreaming       Boolean  @default(true)
+  supportsImageInput      Boolean  @default(false)
+  supportsImageOutput     Boolean  @default(false)
+  createdAt               DateTime @default(now())
+  runs                    Run[]
+
+  @@unique([provider, modelId])
+}
+
+// BYOK (§21). Envelope-encrypted; ciphertext never leaves the server and is
+// never returned by any endpoint.
+model ProviderCredential {
+  id           String    @id @default(cuid())
+  workspaceId  String
+  provider     Provider
+  ciphertext   Bytes
+  dekWrapped   Bytes
+  keyVersion   Int       @default(1)
+  lastFour     String    // display only
+  createdAt    DateTime  @default(now())
+  revokedAt    DateTime?
+  workspace    Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, provider])
+}
+
+enum Provider {
+  OPENAI
+  GOOGLE
+}
+
+// ─── Project & task ────────────────────────────────────────────────────────────
+
+model Project {
+  id                String        @id @default(cuid())
+  workspaceId       String
+  goal              String
+  mode              ProjectMode
+  status            ProjectStatus @default(DRAFT)
+  budgetLimitMicros BigInt
+  // D1: bitmask of fired thresholds (1=70%, 2=90%, 4=100%) so alerts fire once
+  alertsFired       Int           @default(0)
+  maxDebateRounds   Int           @default(1)
+  createdAt         DateTime      @default(now())
+  workspace         Workspace     @relation(fields: [workspaceId], references: [id])
+  tasks             Task[]
+  artifacts         Artifact[]
+  ledger            CostLedgerEntry[]
+  events            ProjectEvent[]
+  audit             AuditEvent[]
+
+  @@index([workspaceId, status])
+}
+
+enum ProjectMode {
+  DELEGATION
+  REVIEW
+  MANUAL
+  DEBATE      // D9: Phase 3
+  COMPETITION // D9: Phase 3
+}
+
+enum ProjectStatus {
+  DRAFT
+  PLANNING
+  PLAN_REVIEW
+  RUNNING
+  HALTED_BUDGET
+  COMPLETED
+  CANCELLED
+  ARCHIVED
+}
+
+model Task {
+  id                 String     @id @default(cuid())
+  projectId          String
+  title              String
+  type               String
+  // Capability tags (§6.2 + image_generation) driving assignment
+  capabilityTags     String[]
+  assigneeModelId    String?
+  reviewerModelId    String?
+  status             TaskStatus @default(PLANNED)
+  priority           Int        @default(0)
+  round              Int        @default(0)
+  // D3: optimistic concurrency for the single transition() guard
+  version            Int        @default(0)
+  // D3: UserDecision expiry -> Halted, never auto-select
+  decisionDeadlineAt DateTime?
+  haltReason         String?
+  createdAt          DateTime   @default(now())
+  project            Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  threads            Thread[]
+  runs               Run[]
+  reviews            Review[]
+  decisions          Decision[]
+  artifacts          Artifact[]
+  contextPackages    ContextPackage[]
+  assignmentDecisions AssignmentDecision[]
+
+  @@index([projectId, status])
+}
+
+// D3: includes the states v1.0 required but never declared
+enum TaskStatus {
+  PLANNED
+  ASSIGNED
+  RUNNING
+  REVIEW
+  REVISION
+  USER_DECISION
+  CONFLICT
+  HALTED
+  APPROVED
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+// ─── Conversation ──────────────────────────────────────────────────────────────
+
+model Thread {
+  id         String              @id @default(cuid())
+  taskId     String
+  roundCount Int                 @default(0)
+  createdAt  DateTime            @default(now())
+  task       Task                @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  messages   Message[]
+  // D7: provider state is per-provider and non-transferable
+  providerRefs ProviderThreadRef[]
+}
+
+model ProviderThreadRef {
+  id         String   @id @default(cuid())
+  threadId   String
+  provider   Provider
+  externalId String   // opaque: OpenAI conversation/response id, Gemini interaction id
+  lastSyncAt DateTime @default(now())
+  thread     Thread   @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  @@unique([threadId, provider])
+}
+
+model Message {
+  id         String     @id @default(cuid())
+  threadId   String
+  actor      Actor
+  content    Json
+  visibility Visibility @default(USER_VISIBLE)
+  runId      String?
+  createdAt  DateTime   @default(now())
+  thread     Thread     @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  @@index([threadId, createdAt])
+}
+
+enum Actor {
+  USER
+  ORCHESTRATOR
+  OPENAI_MODEL
+  GEMINI_MODEL
+  SYSTEM
+}
+
+enum Visibility {
+  USER_VISIBLE
+  INTERNAL
+}
+
+// ─── Runs, idempotency, cost ───────────────────────────────────────────────────
+
+model Run {
+  id                String      @id @default(cuid())
+  taskId            String
+  modelConfigId     String
+  contextPackageId  String?
+  status            RunStatus   @default(PENDING)
+  // D2: request-level dedupe. UNIQUE(taskId, idempotencyKey) makes a duplicate
+  // submit impossible to bill twice.
+  idempotencyKey    String
+  // D2: groups retries of the same logical attempt
+  attemptGroupId    String
+  // D2: written in its own transaction on the first provider event; the only
+  // handle that makes reconciliation possible.
+  providerRequestId String?
+  inputTokens       Int         @default(0)
+  outputTokens      Int         @default(0)
+  // D1: cap derived from REMAINING budget at admission
+  maxOutputTokens   Int
+  costMicros        BigInt      @default(0)
+  errorCode         String?
+  startedAt         DateTime    @default(now())
+  endedAt           DateTime?
+  task              Task        @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  modelConfig       ModelConfig @relation(fields: [modelConfigId], references: [id])
+  contextPackage    ContextPackage? @relation(fields: [contextPackageId], references: [id])
+  ledger            CostLedgerEntry[]
+  reviews           Review[]
+
+  @@unique([taskId, idempotencyKey])
+  @@index([status, startedAt]) // reconciliation sweeper scan
+  @@index([attemptGroupId])
+}
+
+enum RunStatus {
+  PENDING
+  STREAMING
+  COMPLETED
+  FAILED
+  CANCELLED
+  // D2: provider may have billed us; requires a user decision, never auto-retry
+  UNKNOWN
+}
+
+model IdempotencyKey {
+  scope             String
+  key               String
+  requestHash       String
+  projectId         String?
+  responseSnapshot  Json?
+  status            String   @default("IN_PROGRESS")
+  createdAt         DateTime @default(now())
+
+  @@id([scope, key])
+  @@index([createdAt]) // TTL pruning
+}
+
+// D1: append-only. available = budgetLimit - open HOLDs - SETTLEs
+model CostLedgerEntry {
+  id           String        @id @default(cuid())
+  projectId    String
+  runId        String?
+  type         LedgerType
+  amountMicros BigInt
+  note         String?
+  createdAt    DateTime      @default(now())
+  project      Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  run          Run?          @relation(fields: [runId], references: [id])
+
+  @@index([projectId, type])
+  @@index([runId])
+}
+
+enum LedgerType {
+  HOLD
+  SETTLE
+  RELEASE
+}
+
+// ─── Assignment (D5) ───────────────────────────────────────────────────────────
+
+model AssignmentDecision {
+  id                String   @id @default(cuid())
+  taskId            String
+  chosenModelId     String
+  runnerUpModelId   String?
+  totalScore        Float
+  // { capability, quality, cost, latency, preference } per candidate
+  breakdown         Json
+  // score_top - score_second; < 0.08 forces cross-review
+  scoreMargin       Float
+  forcedReview      Boolean  @default(false)
+  // §20 KPI: auto-assignment retention needs the engine's original proposal
+  overriddenByUser  Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  task              Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+}
+
+// ─── Review (D6) ───────────────────────────────────────────────────────────────
+
+model Review {
+  id               String       @id @default(cuid())
+  taskId           String
+  reviewerRunId    String
+  contextPackageId String?
+  round            Int
+  verdict          ReviewVerdict
+  // Self-reported; advisory only, must never gate a transition (D6)
+  confidence       Float?
+  createdAt        DateTime     @default(now())
+  task             Task         @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  reviewerRun      Run          @relation(fields: [reviewerRunId], references: [id])
+  criteria         ReviewCriterionResult[]
+  decisions        Decision[]
+
+  @@index([taskId, round])
+}
+
+enum ReviewVerdict {
+  PASS
+  REVISION
+  USER_DECISION
+  BLOCKED_SAFETY // §16 safety-refusal row now has a home
+}
+
+// Verdict is the aggregation of this checklist, not a free-form opinion:
+// any BLOCKER -> USER_DECISION; any MAJOR -> REVISION; else PASS.
+model ReviewCriterionResult {
+  id           String   @id @default(cuid())
+  reviewId     String
+  criterionKey String   // seeded per task type from §15.2 quality gates
+  passed       Boolean
+  evidence     String   // must quote the deliverable
+  severity     Severity
+  review       Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  @@index([reviewId])
+}
+
+enum Severity {
+  INFO
+  MINOR
+  MAJOR
+  BLOCKER
+}
+
+model Decision {
+  id             String   @id @default(cuid())
+  taskId         String
+  reviewId       String?
+  options        Json
+  selectedOption String
+  rationale      String?
+  decidedByUserId String
+  createdAt      DateTime @default(now())
+  task           Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  review         Review?  @relation(fields: [reviewId], references: [id])
+
+  @@index([taskId])
+}
+
+// ─── Context packages (D7) ─────────────────────────────────────────────────────
+
+// The ONLY channel between the two models, since provider state is
+// non-transferable. Persisted and hashed so any historical call is replayable.
+model ContextPackage {
+  id             String   @id @default(cuid())
+  taskId         String
+  round          Int
+  targetProvider Provider
+  payload        Json
+  tokenEstimate  Int
+  // Deterministic given sourceRefs; hash verifies a replay is byte-identical
+  contentHash    String
+  // { artifactVersionIds, decisionIds, reviewIds, fileIds }
+  sourceRefs     Json
+  createdAt      DateTime @default(now())
+  task           Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  runs           Run[]
+
+  @@index([taskId, round])
+}
+
+// ─── Artifacts (D4) ────────────────────────────────────────────────────────────
+
+model Artifact {
+  id                String            @id @default(cuid())
+  projectId         String
+  taskId            String?
+  type              ArtifactType
+  name              String
+  headVersion       Int               @default(0)
+  activeWriterRunId String?
+  createdAt         DateTime          @default(now())
+  project           Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  task              Task?             @relation(fields: [taskId], references: [id])
+  versions          ArtifactVersion[]
+  lease             ArtifactLease?
+  patches           ArtifactPatch[]
+
+  @@index([projectId])
+}
+
+enum ArtifactType {
+  DOCUMENT
+  CODE
+  IMAGE
+  DATA
+  // D7: file summaries are themselves artifacts, so what the reviewer actually
+  // saw is auditable rather than an invisible lossy step
+  SUMMARY
+}
+
+model ArtifactVersion {
+  id            String   @id @default(cuid())
+  artifactId    String
+  version       Int
+  baseVersion   Int
+  uri           String
+  sizeBytes     Int
+  createdByRunId String?
+  // D4 fencing token: writes under a stale lease epoch are rejected
+  epoch         Int
+  createdAt     DateTime @default(now())
+  artifact      Artifact @relation(fields: [artifactId], references: [id], onDelete: Cascade)
+
+  @@unique([artifactId, version])
+}
+
+// D4: TTL + heartbeat. Without expiry a dead worker deadlocks the artifact.
+model ArtifactLease {
+  artifactId  String   @id
+  holderRunId String
+  epoch       Int      @default(1)
+  acquiredAt  DateTime @default(now())
+  heartbeatAt DateTime @default(now())
+  expiresAt   DateTime
+  artifact    Artifact @relation(fields: [artifactId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
+}
+
+// Reviewers propose; only the assignee applies. Enforces "the assigned model
+// performs the final merge" at the schema level, not by prompt instruction.
+model ArtifactPatch {
+  id              String      @id @default(cuid())
+  artifactId      String
+  baseVersion     Int
+  diff            String
+  rationale       String?
+  proposedByRunId String
+  status          PatchStatus @default(PROPOSED)
+  createdAt       DateTime    @default(now())
+  artifact        Artifact    @relation(fields: [artifactId], references: [id], onDelete: Cascade)
+
+  @@index([artifactId, status])
+}
+
+enum PatchStatus {
+  PROPOSED
+  APPLIED
+  REJECTED
+  STALE
+}
+
+// ─── Events & audit ────────────────────────────────────────────────────────────
+
+// D8: SSE replay. Without this a dropped connection loses text_deltas and the
+// user sees a truncated deliverable the DB believes is complete.
+model ProjectEvent {
+  seq       BigInt   @id @default(autoincrement())
+  projectId String
+  type      String
+  payload   Json
+  createdAt DateTime @default(now())
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, seq])
+}
+
+// D3: written in the SAME transaction as every state transition, which makes
+// §19 traceability an invariant rather than a convention.
+model AuditEvent {
+  id        String   @id @default(cuid())
+  projectId String
+  taskId    String?
+  runId     String?
+  eventType String
+  actorId   String?
+  // Never contains API keys, tokens, or PII (§15.3)
+  payload   Json
+  createdAt DateTime @default(now())
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, createdAt])
+  @@index([taskId])
+}
