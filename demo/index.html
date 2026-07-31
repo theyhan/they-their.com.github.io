@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SNSight - demo</title>
+<style>
+:root {
+  color-scheme: light;
+  --surface-page: #f4f6fa;
+  --surface-card: #ffffff;
+  --surface-sunken: #e9eef5;
+  --surface-inverse: #111a2b;
+  --text-primary: #0f1729;
+  --text-secondary: #2c3849;
+  --text-muted: #4a5769;
+  --text-on-inverse: #f7f9fc;
+  --text-on-accent: #ffffff;
+  --line-default: #808d9e;
+  --line-strong: #5b6879;
+  --line-focus: #0a539b;
+  --accent: #0a539b;
+  --accent-hover: #083f78;
+  --accent-subtle-bg: #e8f0fa;
+  --accent-subtle-text: #083f78;
+  --positive-text: #0b5133;
+  --positive-bg: #e3f3ea;
+  --negative-text: #8c1c2b;
+  --negative-bg: #fbe9ec;
+  --neutral-text: #3f4a5c;
+  --neutral-bg: #eceff4;
+  --warn-text: #6b3a05;
+  --warn-bg: #fdf3e2;
+  --warn-line: #6b3a05;
+  --info-text: #0c4a6e;
+  --info-bg: #e6f3fa;
+  --info-line: #0c4a6e;
+  --font-body: 16px;
+  --font-small: 14px;
+  --font-micro: 12.5px;
+  --badge-raw-api-metric-bg: #eaeef4;
+  --badge-raw-api-metric-text: #26313f;
+  --badge-raw-api-metric-line: #26313f;
+  --badge-calculated-bg: #e6f0fb;
+  --badge-calculated-text: #0a4a86;
+  --badge-calculated-line: #0a4a86;
+  --badge-estimate-bg: #fdf1e0;
+  --badge-estimate-text: #6b3a05;
+  --badge-estimate-line: #6b3a05;
+  --badge-ai-interpretation-bg: #f0eafb;
+  --badge-ai-interpretation-text: #4b2382;
+  --badge-ai-interpretation-line: #4b2382;
+}
+* { box-sizing: border-box; }
+body { margin:0; background:var(--surface-page); color:var(--text-secondary);
+       font:var(--font-body)/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+.wrap { max-width:840px; margin:0 auto; padding:44px 20px 80px; }
+h1 { font-size:30px; color:var(--text-primary); margin:0 0 10px; letter-spacing:-.015em; }
+h2 { font-size:var(--font-body); text-transform:uppercase; letter-spacing:.06em;
+     color:var(--text-muted); margin:40px 0 14px; }
+h3 { font-size:17px; color:var(--text-primary); margin:0 0 4px; }
+p { margin:0 0 12px; }
+a { color:var(--accent); text-underline-offset:2px; }
+:where(a,summary,button,[tabindex]):focus-visible { outline:2px solid var(--line-focus); outline-offset:2px; border-radius:4px; }
+.lede { font-size:19px; color:var(--text-secondary); }
+.banner { border:1px solid var(--warn-line); background:var(--warn-bg); color:var(--warn-text);
+          padding:14px 16px; border-radius:8px; margin:20px 0; }
+.cards { display:grid; gap:14px; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); }
+a.card { display:block; background:var(--surface-card); border:1px solid var(--line-default); border-radius:10px;
+         padding:18px; text-decoration:none; color:inherit; }
+a.card:hover { border-color:var(--accent); }
+a.card strong { display:block; font-size:18px; color:var(--text-primary); margin-bottom:6px; }
+a.card span { font-size:var(--font-small); color:var(--text-muted); display:block; }
+ol,ul { margin:0 0 12px; padding-left:24px; }
+li { margin-bottom:10px; }
+table { width:100%; border-collapse:collapse; font-size:var(--font-small); margin:10px 0 16px; }
+th,td { text-align:left; padding:9px 10px; border-bottom:1px solid var(--line-default); }
+th { font-size:var(--font-micro); text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); }
+code { background:var(--surface-sunken); color:var(--text-primary); padding:2px 6px; border-radius:4px;
+       font-size:var(--font-small); }
+.small { font-size:var(--font-small); color:var(--text-muted); }
+footer { margin-top:52px; padding-top:22px; border-top:1px solid var(--line-default);
+         font-size:var(--font-small); color:var(--text-muted); }
+@media (max-width:640px) { .wrap { padding:28px 16px 64px; } h1 { font-size:26px; } .lede { font-size:17px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>SNSight</h1>
+<p class="lede">Instagram and Threads analytics in one dashboard. This is a working demo of the unified
+dashboard, running on generated data.</p>
+
+<p class="banner"><strong>Nothing here is real.</strong> Every figure comes from a deterministic fixture
+generator, not from a connected account. The generator deliberately produces awkward cases &mdash; posts
+missing reach, days with no activity, groups too small to score &mdash; because those are the states that
+usually go unimplemented.</p>
+
+<h2>Open the dashboard</h2>
+<div class="cards">
+  <a class="card" href="dashboard-7d.html">
+    <strong>Last 7 days</strong>
+    <span>5 posts &middot; 3 ranked</span>
+    <span>AI confidence: LOW</span>
+  </a>
+  <a class="card" href="dashboard-30d.html">
+    <strong>Last 30 days</strong>
+    <span>35 posts &middot; 3 ranked</span>
+    <span>AI confidence: HIGH</span>
+  </a>
+  <a class="card" href="dashboard-90d.html">
+    <strong>Last 90 days</strong>
+    <span>123 posts &middot; 3 ranked</span>
+    <span>AI confidence: HIGH</span>
+  </a>
+</div>
+<p class="small">The same account and the same data, across three date ranges. Confidence and the number of
+ranked posts change with the range, which is the intended behaviour: a shorter window is weaker evidence.</p>
+
+<h2>Sign-in screen</h2>
+<p>The account screens are built as a Next.js application with server-side sessions. This page is a
+static rendering of the sign-in layout so the wording and contrast can be reviewed here.</p>
+<div class="cards">
+  <a class="card" href="login.html">
+    <strong>View the sign-in screen</strong>
+    <span>Layout, copy and validation messages</span>
+    <span>Not functional on a static host</span>
+  </a>
+</div>
+
+<h2>What to look at</h2>
+<ol>
+  <li><strong>The <code>!</code> beside the Instagram engagement rate.</strong> Some posts did not report
+  reach, so the rate was computed against views &mdash; and it says so, because a value measured on a
+  substitute denominator cannot be compared with one measured on the real thing.</li>
+  <li><strong>The follower growth card has no change badge.</strong> That metric is already a change.
+  Pairing it with "no comparison available" would be noise dressed as information.</li>
+  <li><strong>Hollow dots on the trend line.</strong> Days with no posts are gaps, not zeroes. Plotting
+  them at the baseline would draw a decline that never happened.</li>
+  <li><strong>Instagram views and Threads views are never added together.</strong> They measure different
+  things. Only post counts and followers are combined, and the follower total admits it double counts
+  anyone following both accounts.</li>
+  <li><strong>The AI panel is pending, yet states its confidence.</strong> Confidence is calculated from
+  the evidence base by rule before any model runs, because a model asked to rate itself will claim high
+  confidence on three posts.</li>
+  <li><strong>Every absent value explains itself.</strong> Expand "What does this mean?" on any card, and
+  look for the not-calculable states in the content tables: each carries a reason and a next step.</li>
+</ol>
+
+<h2>Metric states in the 30-day render</h2>
+<table>
+<thead><tr><th>State</th><th>Count</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code>VALUE</code></td><td>244</td><td>Computed on its preferred inputs.</td></tr>
+<tr><td><code>VALUE_WITH_CAVEAT</code></td><td>4</td><td>Computed on a fallback denominator, disclosed with the value.</td></tr>
+<tr><td><code>NOT_CALCULABLE</code></td><td>3</td><td>Knowable in principle, not knowable here. Carries a reason and an action.</td></tr>
+<tr><td><code>NOT_SYNCED</code></td><td>3</td><td>Outside the collected window. Distinct from zero and from broken.</td></tr>
+</tbody>
+</table>
+<p class="small">All four appear, which is the point: each needs a design, and only the first is usually
+mocked.</p>
+
+<h2>Decisions behind this</h2>
+<p>The specification asks for several things no official API can deliver. Four decisions change product
+scope and need sign-off:</p>
+<ul>
+  <li><a href="https://github.com/theyhan/they-their.com.github.io/blob/feat/snsight-foundation/snsight/docs/adr/0001-competitor-data-path.md">Competitor monitoring is Instagram-only</a>
+  &mdash; Threads publishes no API for accounts you do not own.</li>
+  <li><a href="https://github.com/theyhan/they-their.com.github.io/blob/feat/snsight-foundation/snsight/docs/adr/0002-meta-connection-strategy.md">Instagram must use the Facebook Login flow</a>
+  &mdash; which requires users to have a linked Facebook Page.</li>
+  <li><a href="https://github.com/theyhan/they-their.com.github.io/blob/feat/snsight-foundation/snsight/docs/adr/0003-metric-definition-registry.md">Engagement rate is two formulas, not one</a>
+  &mdash; the specification's single formula summed metrics that never coexist.</li>
+  <li><a href="https://github.com/theyhan/they-their.com.github.io/blob/feat/snsight-foundation/snsight/docs/adr/0004-normalized-performance-index.md">The 0-100 index is a percentile within a cohort</a>
+  &mdash; relative to this account only, never an absolute score.</li>
+</ul>
+<p class="small">Full set: <a href="https://github.com/theyhan/they-their.com.github.io/tree/feat/snsight-foundation/snsight/docs/adr">the seven ADRs</a> and
+<a href="https://github.com/theyhan/they-their.com.github.io/blob/feat/snsight-foundation/snsight/docs/spec-amendments.md">the spec amendment map</a>.</p>
+
+<h2>How much of this is verified</h2>
+<p>66 automated checks pass over the metric engine, the fixture provider and this dashboard's view model,
+covering the behaviour above: that a missing input does not silently shrink a percentage, that a fallback
+denominator is always disclosed, that a percentile is never published on fewer than 8 comparable posts.</p>
+<p>The React application, by contrast, <strong>has never been run</strong>. Dependencies could not be
+installed where this was written, so these pages come from a separate static renderer that consumes the
+identical view model. The wording and the states are real; the colours, spacing and mobile layout are not
+yet confirmed.</p>
+
+<footer>
+Generated by <code>scripts/render-preview.ts</code> from fixture seed <code>demo</code>, as of 2026-07-31.
+Deterministic: the same seed always produces this page.
+&middot; <a href="https://github.com/theyhan/they-their.com.github.io/blob/feat/snsight-foundation/snsight/preview/dashboard.md">Text version</a>
+&middot; <a href="https://github.com/theyhan/they-their.com.github.io/tree/feat/snsight-foundation/snsight">Source</a>
+</footer>
+
+</div>
+</body>
+</html>
