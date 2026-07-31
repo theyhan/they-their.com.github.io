@@ -1,0 +1,678 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SNSight - unified dashboard preview</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:#f8fafc; color:#0f172a;
+         font:15px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  .wrap { max-width:1100px; margin:0 auto; padding:24px 16px 64px; }
+  h1 { font-size:20px; margin:0 0 4px; }
+  h2 { font-size:12px; text-transform:uppercase; letter-spacing:.05em; color:#64748b; margin:32px 0 12px; }
+  h3 { font-size:14px; margin:0; }
+  .banner { border:1px solid #fcd34d; background:#fffbeb; color:#78350f;
+            padding:10px 12px; border-radius:6px; margin-bottom:16px; font-size:14px; }
+  .muted { color:#475569; font-size:13px; }
+  .small { font-size:12px; color:#475569; }
+  .grid { display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); }
+  .card { background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:14px;
+          box-shadow:0 1px 2px rgba(15,23,42,.04); }
+  .card-head { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+  .value { font-size:24px; font-weight:600; font-variant-numeric:tabular-nums; margin:10px 0 0; }
+  .absent-head { font-size:15px; font-weight:600; color:#334155; margin:10px 0 0; }
+  .badge { display:inline-block; border:1px solid; border-radius:4px; padding:2px 6px;
+           font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; white-space:nowrap; }
+  .b-raw { background:#f1f5f9; color:#334155; border-color:#cbd5e1; }
+  .b-calc { background:#f0f9ff; color:#075985; border-color:#7dd3fc; }
+  .b-est { background:#fffbeb; color:#78350f; border-color:#fcd34d; }
+  .b-ai { background:#f5f3ff; color:#4c1d95; border-color:#c4b5fd; }
+  .chg { margin:8px 0 0; font-size:12px; font-weight:600; display:flex; gap:4px; align-items:center; }
+  .pos { color:#065f46; } .neg { color:#9f1239; } .neu { color:#475569; }
+  .caveat { color:#78350f; font-size:12px; margin:6px 0 0; }
+  .foot { color:#64748b; font-size:12px; margin:8px 0 0; }
+  details { margin-top:8px; }
+  summary { cursor:pointer; font-size:12px; color:#0369a1; }
+  table { width:100%; border-collapse:collapse; margin-top:8px; font-size:13px; }
+  th,td { text-align:left; padding:6px 8px; border-bottom:1px solid #e2e8f0; vertical-align:top; }
+  th { font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:#64748b; }
+  .ai { border:1px solid #ddd6fe; background:#faf5ff; border-radius:8px; padding:14px; margin-top:12px; }
+  .legend { display:flex; gap:16px; flex-wrap:wrap; font-size:12px; color:#475569; margin-top:8px; padding:0; list-style:none; }
+  .notcalc { color:#64748b; font-weight:400; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<p class="banner"><strong>Sample data.</strong> Generated content so the product can be reviewed before an account is connected. No figure here describes a real account.</p>
+<h1>Unified dashboard</h1>
+<p class="muted">Last 30 days (2026-07-02 to 2026-07-31), compared with the previous 30 days.</p>
+
+<ul class="legend">
+<li>● <strong>@demo.studio</strong> synced 2026-07-30 23:18 UTC &mdash; Connected</li>
+<li>⚠ <strong>@demo.studio.threads</strong> synced 2026-07-30 23:18 UTC &mdash; Connection expires soon - reconnect to avoid a gap</li>
+</ul>
+
+<p class="small">This workspace uses generated sample data. No figure here describes a real account.</p>
+
+<h2>Across platforms</h2>
+<div class="grid"><div class="card">
+  <div class="card-head">
+    <h3>Followers</h3>
+    <span class="badge b-raw">From platform</span>
+  </div>
+  <p class="value">25,895</p>
+  <p class="chg pos">
+    <span aria-hidden="true">▲</span><span>+4.2% vs previous 30 days</span>
+  </p>
+  <p class="foot">Combined across platforms. The same person may follow both accounts, so this is not a unique-audience figure.</p>
+  <details><summary>What does this mean?</summary><p class="small">Followers at the end of the selected period. Instagram and Threads followers are added together.</p></details>
+  <p class="small">No drill-down: no single post explains this figure.</p>
+</div>
+<div class="card">
+  <div class="card-head">
+    <h3>Follower growth</h3>
+    <span class="badge b-calc">Calculated</span>
+  </div>
+  <p class="value">4.2%</p>
+  
+  <p class="foot">Growth across the selected period, not against the comparison period.</p>
+  <details><summary>What does this mean?</summary><p class="small">How much the follower count grew or shrank across the selected period. Formula: (ending followers - starting followers) / starting followers x 100.</p></details>
+  <p class="small">No drill-down: no single post explains this figure.</p>
+</div>
+<div class="card">
+  <div class="card-head">
+    <h3>Posts published</h3>
+    <span class="badge b-calc">Calculated</span>
+  </div>
+  <p class="value">35</p>
+  <p class="chg pos">
+    <span aria-hidden="true">▲</span><span>+25.0% vs previous 30 days</span>
+  </p>
+  <p class="foot">A post is a post on both platforms, so this total is combined. Views and interactions are not.</p>
+  <details><summary>What does this mean?</summary><p class="small">Posts published inside the selected period. Counted from collected media, so it can differ from the platform profile total when the period predates collection. Formula: count of posts published within the period.</p></details>
+  <details><summary>Show the 35 post(s) behind this figure</summary>
+         <p class="small">Filters: All platforms &middot; 2026-07-02 to 2026-07-31</p>
+         <table>
+<thead><tr><th>Post</th><th>Index</th><th>Engagement</th><th>Native metrics</th></tr></thead>
+<tbody>
+<tr>
+  <td><strong>TH TH_TEXT</strong> 2026-07-31<br>conclusion first: product tips #16</td>
+  <td>47 / 100</td>
+  <td>3.2%</td>
+  <td>Views: 76,545<br>Likes: 1,707<br>Replies: 327<br>Reposts: 240<br>Quotes: 145</td>
+</tr>
+<tr>
+  <td><strong>IG IG_REEL</strong> 2026-07-31<br>question: behind the scenes #19</td>
+  <td>48 / 100</td>
+  <td>4.4%</td>
+  <td>Views: 65,059<br>Reach: 38,645<br>Likes: 3<br>Comments: 137<br>Saves: 1,256</td>
+</tr>
+<tr>
+  <td><strong>IG IG_IMAGE</strong> 2026-07-31<br>personal experience: product tips #18</td>
+  <td>41 / 100</td>
+  <td>8.0% <span class="caveat">(on views)</span></td>
+  <td>Views: 69,656<br>Reach: <span class="notcalc" title="This period predates the start of data collection for this account. Choose a range inside the available coverage window.">not collected</span><br>Likes: 4,878<br>Comments: 307<br>Saves: 367</td>
+</tr>
+<tr>
+  <td><strong>TH TH_IMAGE</strong> 2026-07-31<br>personal experience: ask me anything #15</td>
+  <td>90 / 100</td>
+  <td>6.1%</td>
+  <td>Views: 36,683<br>Likes: 1,729<br>Replies: 238<br>Reposts: 270<br>Quotes: 0</td>
+</tr>
+<tr>
+  <td><strong>IG IG_REEL</strong> 2026-07-30<br>contrarian take: ask me anything #16</td>
+  <td>67 / 100</td>
+  <td>5.6%</td>
+  <td>Views: 7,634<br>Reach: 6,506<br>Likes: 250<br>Comments: 65<br>Saves: 26</td>
+</tr>
+<tr>
+  <td><strong>TH TH_TEXT</strong> 2026-07-30<br>conclusion first: product tips #14</td>
+  <td>63 / 100</td>
+  <td>3.6%</td>
+  <td>Views: 14,964<br>Likes: 385<br>Replies: 1<br>Reposts: 140<br>Quotes: 12</td>
+</tr>
+<tr>
+  <td><strong>IG IG_STORY</strong> 2026-07-30<br>conclusion first: product tips #17</td>
+  <td>21 / 100</td>
+  <td>2.8%</td>
+  <td>Views: 1,593<br>Reach: 1,303<br>Likes: 6<br>Comments: 1<br>Saves: 20</td>
+</tr>
+<tr>
+  <td><strong>TH TH_IMAGE</strong> 2026-07-28<br>plain information: product tips #13</td>
+  <td>48 / 100</td>
+  <td>2.3%</td>
+  <td>Views: 61,187<br>Likes: 565<br>Replies: 689<br>Reposts: 19<br>Quotes: 123</td>
+</tr>
+</tbody></table>
+         <p class="small">Showing 8 of 35.</p>
+        </details>
+</div></div>
+
+
+<h2>Instagram &mdash; Connected</h2>
+<div class="grid"><div class="card">
+  <div class="card-head">
+    <h3>Views <span class="small">Instagram</span></h3>
+    <span class="badge b-raw">From platform</span>
+  </div>
+  <p class="value">664,304</p>
+  <p class="chg pos">
+    <span aria-hidden="true">▲</span><span>+27.7% vs previous 30 days</span>
+  </p>
+  
+  <details><summary>What does this mean?</summary><p class="small">Plays or views of the post. Recent Instagram API versions consolidated older impression-style metrics into views, which is why this definition carries an availability window.</p></details>
+  <details><summary>Show the 19 post(s) behind this figure</summary>
+         <p class="small">Filters: Instagram &middot; 2026-07-02 to 2026-07-31</p>
+         <table>
+<thead><tr><th>Post</th><th>Index</th><th>Engagement</th><th>Native metrics</th></tr></thead>
+<tbody>
+<tr>
+  <td><strong>IG IG_STORY</strong> 2026-07-21<br>contrarian take: ask me anything #10</td>
+  <td>57 / 100</td>
+  <td>4.1% <span class="caveat">(on views)</span></td>
+  <td>Views: 82,153<br>Reach: <span class="notcalc" title="This period predates the start of data collection for this account. Choose a range inside the available coverage window.">not collected</span><br>Likes: 2,894<br>Comments: 65<br>Saves: 343</td>
+</tr>
+<tr>
+  <td><strong>IG IG_IMAGE</strong> 2026-07-31<br>personal experience: product tips #18</td>
+  <td>41 / 100</td>
+  <td>8.0% <span class="caveat">(on views)</span></td>
+  <td>Views: 69,656<br>Reach: <span class="notcalc" title="This period predates the start of data collection for this account. Choose a range inside the available coverage window.">not collected</span><br>Likes: 4,878<br>Comments: 307<br>Saves: 367</td>
+</tr>
+<tr>
+  <td><strong>IG IG_STORY</strong> 2026-07-09<br>contrarian take: routine #3</td>
+  <td>71 / 100</td>
+  <td>4.5%</td>
+  <td>Views: 69,031<br>Reach: 45,853<br>Likes: 630<br>Comments: 662<br>Saves: 4</td>
+</tr>
+<tr>
+  <td><strong>IG IG_REEL</strong> 2026-07-16<br>question: industry news #4</td>
+  <td>62 / 100</td>
+  <td>5.6%</td>
+  <td>Views: 67,550<br>Reach: 38,219<br>Likes: 1,369<br>Comments: 14<br>Saves: 761</td>
+</tr>
+<tr>
+  <td><strong>IG IG_REEL</strong> 2026-07-17<br>question: product tips #6</td>
+  <td>19 / 100</td>
+  <td>3.0%</td>
+  <td>Views: 67,532<br>Reach: 45,892<br>Likes: 772<br>Comments: 16<br>Saves: 534</td>
+</tr>
+<tr>
+  <td><strong>IG IG_REEL</strong> 2026-07-31<br>question: behind the scenes #19</td>
+  <td>48 / 100</td>
+  <td>4.4%</td>
+  <td>Views: 65,059<br>Reach: 38,645<br>Likes: 3<br>Comments: 137<br>Saves: 1,256</td>
+</tr>
+<tr>
+  <td><strong>IG IG_REEL</strong> 2026-07-08<br>conclusion first: product tips #1</td>
+  <td>33 / 100</td>
+  <td>3.6%</td>
+  <td>Views: 48,816<br>Reach: 36,076<br>Likes: 503<br>Comments: 216<br>Saves: 524</td>
+</tr>
+<tr>
+  <td><strong>IG IG_IMAGE</strong> 2026-07-18<br>conclusion first: product tips #8</td>
+  <td>53 / 100</td>
+  <td>9.4%</td>
+  <td>Views: 47,467<br>Reach: 39,017<br>Likes: 3,115<br>Comments: 122<br>Saves: 431</td>
+</tr>
+</tbody></table>
+         <p class="small">Showing 8 of 19.</p>
+        </details>
+</div>
+<div class="card">
+  <div class="card-head">
+    <h3>Interactions <span class="small">Instagram</span></h3>
+    <span class="badge b-calc">Calculated</span>
+  </div>
+  <p class="value">26,980</p>
+  <p class="chg pos">
+    <span aria-hidden="true">▲</span><span>+39.7% vs previous 30 days</span>
+  </p>
+  
+  <details><summary>What does this mean?</summary><p class="small">Sum of Instagram interactions on the post. Saves and shares are owner-only, so this is unavailable for competitors. Formula: likes + comments + saves + shares.</p></details>
+  <details><summary>Show the 19 post(s) behind this figure</summary>
+         <p class="small">Filters: Instagram &middot; 2026-07-02 to 2026-07-31</p>
+         <table>
+<thead><tr><th>Post</th><th>Index</th><th>Engagement</th><th>Native metrics</th></tr></thead>
+<tbody>
+<tr>
+  <td><strong>IG IG_IMAGE</strong> 2026-07-31<br>personal experience: product tips #18</td>
+  <td>41 / 100</td>
+  <td>8.0% <span class="caveat">(on views)</span></td>
+  <td>Views: 69,656<br>Reach: <span class="notcalc" title="This period predates the start of data collection for this account. Choose a range inside the available coverage window.">not collected</span><br>Likes: 4,878<br>Comments: 307<br>Saves: 367</td>
+</tr>
+<tr>
+  <td><strong>IG IG_IMAGE</strong> 2026-07-18<br>conclusion first: product tips #8</td>
+  <td>53 / 100</td>
+  <td>9.4%</td>
+  <td>Views: 47,467<br>Reach: 39,017<br>Likes: 3,115<br>Comments: 122<br>Saves: 431</td>
+</tr>
+<tr>
+  <td><strong>IG IG_STORY</strong> 2026-07-21<br>contrarian take: ask me anything #10</td>
+  <td>57 / 100</td>
+  <td>4.1% <span class="caveat">(on views)</span></td>
+  <td>Views: 82,153<br>Reach: <span class="notcalc" title="This period predates the start of data collection for this account. Choose a range inside the available coverage window.">not collected</span><br>Likes: 2,894<br>Comments: 65<br>Saves: 343</td>
+</tr>
+<tr>
+  <td><strong>IG IG_REEL</strong> 2026-07-16<br>question: industry news #4</td>
+  <td>62 / 100</td>
+  <td>5.6%</td>
+  <td>Views: 67,550<br>Reach: 38,219<br>Likes: 1,369<br>Comments: 14<br>Saves: 761</td>
+</tr>
+<tr>
+  <td><strong>IG IG_REEL</strong> 2026-07-31<br>question: behind the scenes #19</td>
+  <td>48 / 100</td>
+  <td>4.4%</td>
+  <td>Views: 65,059<br>Reach: 38,645<br>Likes: 3<br>Comments: 137<br>Saves: 1,256</td>
+</tr>
+<tr>
+  <td><strong>IG IG_REEL</strong> 2026-07-17<br>question: product tips #6</td>
+  <td>19 / 100</td>
+  <td>3.0%</td>
+  <td>Views: 67,532<br>Reach: 45,892<br>Likes: 772<br>Comments: 16<br>Saves: 534</td>
+</tr>
+<tr>
+  <td><strong>IG IG_STORY</strong> 2026-07-09<br>contrarian take: routine #3</td>
+  <td>71 / 100</td>
+  <td>4.5%</td>
+  <td>Views: 69,031<br>Reach: 45,853<br>Likes: 630<br>Comments: 662<br>Saves: 4</td>
+</tr>
+<tr>
+  <td><strong>IG IG_REEL</strong> 2026-07-08<br>conclusion first: product tips #1</td>
+  <td>33 / 100</td>
+  <td>3.6%</td>
+  <td>Views: 48,816<br>Reach: 36,076<br>Likes: 503<br>Comments: 216<br>Saves: 524</td>
+</tr>
+</tbody></table>
+         <p class="small">Showing 8 of 19.</p>
+        </details>
+</div>
+<div class="card">
+  <div class="card-head">
+    <h3>Engagement rate <span class="small">Instagram</span></h3>
+    <span class="badge b-calc">Calculated</span>
+  </div>
+  <p class="value">4.1%</p><p class="caveat">! Calculated on views because the preferred denominator was unavailable. Not directly comparable with values based on reach.</p>
+  <p class="chg pos">
+    <span aria-hidden="true">▲</span><span>+9.5% vs previous 30 days</span>
+  </p>
+  <p class="foot">Some posts did not report reach, so this period is measured against views.</p>
+  <details><summary>What does this mean?</summary><p class="small">The share of accounts that saw the post and then interacted with it. Instagram and Threads engagement rates are calculated differently and are not directly comparable. Formula: (likes + comments + saves + shares) / reach x 100.</p></details>
+  <details><summary>Show the 19 post(s) behind this figure</summary>
+         <p class="small">Filters: Instagram &middot; 2026-07-02 to 2026-07-31</p>
+         <table>
+<thead><tr><th>Post</th><th>Index</th><th>Engagement</th><th>Native metrics</th></tr></thead>
+<tbody>
+<tr>
+  <td><strong>IG IG_IMAGE</strong> 2026-07-23<br>question: behind the scenes #13</td>
+  <td>59 / 100</td>
+  <td>9.4%</td>
+  <td>Views: 13,407<br>Reach: 9,775<br>Likes: 790<br>Comments: 46<br>Saves: 86</td>
+</tr>
+<tr>
+  <td><strong>IG IG_IMAGE</strong> 2026-07-18<br>conclusion first: product tips #8</td>
+  <td>53 / 100</td>
+  <td>9.4%</td>
+  <td>Views: 47,467<br>Reach: 39,017<br>Likes: 3,115<br>Comments: 122<br>Saves: 431</td>
+</tr>
+<tr>
+  <td><strong>IG IG_IMAGE</strong> 2026-07-21<br>conclusion first: ask me anything #9</td>
+  <td>47 / 100</td>
+  <td>8.5%</td>
+  <td>Views: 3,002<br>Reach: 1,746<br>Likes: 56<br>Comments: 11<br>Saves: 52</td>
+</tr>
+<tr>
+  <td><strong>IG IG_IMAGE</strong> 2026-07-31<br>personal experience: product tips #18</td>
+  <td>41 / 100</td>
+  <td>8.0% <span class="caveat">(on views)</span></td>
+  <td>Views: 69,656<br>Reach: <span class="notcalc" title="This period predates the start of data collection for this account. Choose a range inside the available coverage window.">not collected</span><br>Likes: 4,878<br>Comments: 307<br>Saves: 367</td>
+</tr>
+<tr>
+  <td><strong>IG IG_STORY</strong> 2026-07-17<br>contrarian take: product tips #7</td>
+  <td>86 / 100</td>
+  <td>6.0%</td>
+  <td>Views: 18,489<br>Reach: 13,878<br>Likes: 635<br>Comments: 35<br>Saves: 43</td>
+</tr>
+<tr>
+  <td><strong>IG IG_REEL</strong> 2026-07-30<br>contrarian take: ask me anything #16</td>
+  <td>67 / 100</td>
+  <td>5.6%</td>
+  <td>Views: 7,634<br>Reach: 6,506<br>Likes: 250<br>Comments: 65<br>Saves: 26</td>
+</tr>
+<tr>
+  <td><strong>IG IG_REEL</strong> 2026-07-16<br>question: industry news #4</td>
+  <td>62 / 100</td>
+  <td>5.6%</td>
+  <td>Views: 67,550<br>Reach: 38,219<br>Likes: 1,369<br>Comments: 14<br>Saves: 761</td>
+</tr>
+<tr>
+  <td><strong>IG IG_STORY</strong> 2026-07-23<br>personal experience: routine #12</td>
+  <td>79 / 100</td>
+  <td>5.1%</td>
+  <td>Views: 18,127<br>Reach: 14,298<br>Likes: 454<br>Comments: 204<br>Saves: 33</td>
+</tr>
+</tbody></table>
+         <p class="small">Showing 8 of 19.</p>
+        </details>
+</div></div>
+<div class="card" style="margin-top:12px">
+  <p class="small"><strong>Views by day</strong> <span class="badge b-raw">From platform</span></p>
+<svg viewBox="0 0 720 170" width="100%" role="img" aria-label="Views per day">
+  <g transform="translate(46,10)">
+    <line x1="0" y1="130" x2="662" y2="130" stroke="#cbd5e1"/>
+    <text x="-8" y="10" text-anchor="end" font-size="10" fill="#64748b">134,715</text>
+    <text x="-8" y="130" text-anchor="end" font-size="10" fill="#64748b">0</text>
+    <path d="M137.0,50.5 L159.8,63.4" fill="none" stroke="#0369a1" stroke-width="2"/><path d="M319.6,60.3 L342.4,47.0 L365.2,84.2" fill="none" stroke="#0369a1" stroke-width="2"/><path d="M433.7,47.8 L456.6,98.4 L479.4,99.6" fill="none" stroke="#0369a1" stroke-width="2"/><path d="M639.2,121.1 L662.0,0.0" fill="none" stroke="#0369a1" stroke-width="2"/>
+    <circle cx="0.0" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="22.8" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="45.7" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="68.5" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="91.3" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="114.1" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="137.0" cy="50.5" r="3.2" fill="#0369a1"><title>2026-07-08: 82,426 (2 post(s))</title></circle><circle cx="159.8" cy="63.4" r="3.2" fill="#0369a1"><title>2026-07-09: 69,031 (1 post(s))</title></circle><circle cx="182.6" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="205.4" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="228.3" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="251.1" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="273.9" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="296.8" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="319.6" cy="60.3" r="3.2" fill="#0369a1"><title>2026-07-16: 72,204 (2 post(s))</title></circle><circle cx="342.4" cy="47.0" r="3.2" fill="#0369a1"><title>2026-07-17: 86,021 (2 post(s))</title></circle><circle cx="365.2" cy="84.2" r="3.2" fill="#0369a1"><title>2026-07-18: 47,467 (1 post(s))</title></circle><circle cx="388.1" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="410.9" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="433.7" cy="47.8" r="3.2" fill="#0369a1"><title>2026-07-21: 85,155 (2 post(s))</title></circle><circle cx="456.6" cy="98.4" r="3.2" fill="#0369a1"><title>2026-07-22: 32,775 (1 post(s))</title></circle><circle cx="479.4" cy="99.6" r="3.2" fill="#0369a1"><title>2026-07-23: 31,534 (2 post(s))</title></circle><circle cx="502.2" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="525.0" cy="116.7" r="3.2" fill="#0369a1"><title>2026-07-25: 13,749 (2 post(s))</title></circle><circle cx="547.9" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="570.7" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="593.5" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="616.3" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="639.2" cy="121.1" r="3.2" fill="#0369a1"><title>2026-07-30: 9,227 (2 post(s))</title></circle><circle cx="662.0" cy="0.0" r="3.2" fill="#0369a1"><title>2026-07-31: 134,715 (2 post(s))</title></circle>
+    <text x="0" y="148" font-size="10" fill="#64748b">2026-07-02</text>
+    <text x="662" y="148" text-anchor="end" font-size="10" fill="#64748b">2026-07-31</text>
+  </g>
+</svg>
+<ul class="legend">
+  <li>&#9679; Published activity</li><li>&#9675; No posts that day</li><li>&#215; Outside collected data</li>
+</ul>
+  <p class="foot">19 posts, 54.3% of everything published in this period. Interaction totals are platform-native. Instagram counts saves and shares; Threads counts replies, reposts and quotes, so the two totals are shown side by side rather than summed.</p>
+  
+</div>
+
+<h2>Threads &mdash; Connection expires soon - reconnect to avoid a gap</h2>
+<div class="grid"><div class="card">
+  <div class="card-head">
+    <h3>Views <span class="small">Threads</span></h3>
+    <span class="badge b-raw">From platform</span>
+  </div>
+  <p class="value">475,837</p>
+  <p class="chg pos">
+    <span aria-hidden="true">▲</span><span>+36.9% vs previous 30 days</span>
+  </p>
+  <p class="foot">Threads views are not equivalent to Instagram reach and are never added to it.</p>
+  <details><summary>What does this mean?</summary><p class="small">How many times the thread was viewed. Threads reports views rather than reach, so this figure is never added to an Instagram reach total. Platform data available from 2024-04-13.</p></details>
+  <details><summary>Show the 16 post(s) behind this figure</summary>
+         <p class="small">Filters: Threads &middot; 2026-07-02 to 2026-07-31</p>
+         <table>
+<thead><tr><th>Post</th><th>Index</th><th>Engagement</th><th>Native metrics</th></tr></thead>
+<tbody>
+<tr>
+  <td><strong>TH TH_IMAGE</strong> 2026-07-11<br>personal experience: customer story #2</td>
+  <td>43 / 100</td>
+  <td>2.1%</td>
+  <td>Views: 76,935<br>Likes: 1,025<br>Replies: 384<br>Reposts: 96<br>Quotes: 77</td>
+</tr>
+<tr>
+  <td><strong>TH TH_TEXT</strong> 2026-07-31<br>conclusion first: product tips #16</td>
+  <td>47 / 100</td>
+  <td>3.2%</td>
+  <td>Views: 76,545<br>Likes: 1,707<br>Replies: 327<br>Reposts: 240<br>Quotes: 145</td>
+</tr>
+<tr>
+  <td><strong>TH TH_IMAGE</strong> 2026-07-28<br>plain information: product tips #13</td>
+  <td>48 / 100</td>
+  <td>2.3%</td>
+  <td>Views: 61,187<br>Likes: 565<br>Replies: 689<br>Reposts: 19<br>Quotes: 123</td>
+</tr>
+<tr>
+  <td><strong>TH TH_IMAGE</strong> 2026-07-19<br>contrarian take: customer story #8</td>
+  <td>29 / 100</td>
+  <td>1.9%</td>
+  <td>Views: 55,705<br>Likes: 68<br>Replies: 1,000<br>Reposts: 0<br>Quotes: 18</td>
+</tr>
+<tr>
+  <td><strong>TH TH_TEXT</strong> 2026-07-27<br>personal experience: product tips #12</td>
+  <td>21 / 100</td>
+  <td>2.0%</td>
+  <td>Views: 41,686<br>Likes: 311<br>Replies: 165<br>Reposts: 324<br>Quotes: 35</td>
+</tr>
+<tr>
+  <td><strong>TH TH_IMAGE</strong> 2026-07-19<br>question: product tips #7</td>
+  <td>33 / 100</td>
+  <td>2.0%</td>
+  <td>Views: 41,015<br>Likes: 630<br>Replies: 4<br>Reposts: 14<br>Quotes: 162</td>
+</tr>
+<tr>
+  <td><strong>TH TH_IMAGE</strong> 2026-07-31<br>personal experience: ask me anything #15</td>
+  <td>90 / 100</td>
+  <td>6.1%</td>
+  <td>Views: 36,683<br>Likes: 1,729<br>Replies: 238<br>Reposts: 270<br>Quotes: 0</td>
+</tr>
+<tr>
+  <td><strong>TH TH_VIDEO</strong> 2026-07-09<br>question: routine #1</td>
+  <td>17 / 100</td>
+  <td>1.6%</td>
+  <td>Views: 24,957<br>Likes: 55<br>Replies: 89<br>Reposts: 179<br>Quotes: 78</td>
+</tr>
+</tbody></table>
+         <p class="small">Showing 8 of 16.</p>
+        </details>
+</div>
+<div class="card">
+  <div class="card-head">
+    <h3>Interactions <span class="small">Threads</span></h3>
+    <span class="badge b-calc">Calculated</span>
+  </div>
+  <p class="value">13,466</p>
+  <p class="chg pos">
+    <span aria-hidden="true">▲</span><span>+62.8% vs previous 30 days</span>
+  </p>
+  
+  <details><summary>What does this mean?</summary><p class="small">Sum of Threads interactions on the post. Formula: likes + replies + reposts + quotes. Platform data available from 2024-04-13.</p></details>
+  <details><summary>Show the 16 post(s) behind this figure</summary>
+         <p class="small">Filters: Threads &middot; 2026-07-02 to 2026-07-31</p>
+         <table>
+<thead><tr><th>Post</th><th>Index</th><th>Engagement</th><th>Native metrics</th></tr></thead>
+<tbody>
+<tr>
+  <td><strong>TH TH_TEXT</strong> 2026-07-31<br>conclusion first: product tips #16</td>
+  <td>47 / 100</td>
+  <td>3.2%</td>
+  <td>Views: 76,545<br>Likes: 1,707<br>Replies: 327<br>Reposts: 240<br>Quotes: 145</td>
+</tr>
+<tr>
+  <td><strong>TH TH_IMAGE</strong> 2026-07-31<br>personal experience: ask me anything #15</td>
+  <td>90 / 100</td>
+  <td>6.1%</td>
+  <td>Views: 36,683<br>Likes: 1,729<br>Replies: 238<br>Reposts: 270<br>Quotes: 0</td>
+</tr>
+<tr>
+  <td><strong>TH TH_IMAGE</strong> 2026-07-11<br>personal experience: customer story #2</td>
+  <td>43 / 100</td>
+  <td>2.1%</td>
+  <td>Views: 76,935<br>Likes: 1,025<br>Replies: 384<br>Reposts: 96<br>Quotes: 77</td>
+</tr>
+<tr>
+  <td><strong>TH TH_VIDEO</strong> 2026-07-23<br>personal experience: product tips #11</td>
+  <td>94 / 100</td>
+  <td>6.9%</td>
+  <td>Views: 22,305<br>Likes: 1,452<br>Replies: 58<br>Reposts: 8<br>Quotes: 23</td>
+</tr>
+<tr>
+  <td><strong>TH TH_IMAGE</strong> 2026-07-28<br>plain information: product tips #13</td>
+  <td>48 / 100</td>
+  <td>2.3%</td>
+  <td>Views: 61,187<br>Likes: 565<br>Replies: 689<br>Reposts: 19<br>Quotes: 123</td>
+</tr>
+<tr>
+  <td><strong>TH TH_IMAGE</strong> 2026-07-19<br>contrarian take: customer story #8</td>
+  <td>29 / 100</td>
+  <td>1.9%</td>
+  <td>Views: 55,705<br>Likes: 68<br>Replies: 1,000<br>Reposts: 0<br>Quotes: 18</td>
+</tr>
+<tr>
+  <td><strong>TH TH_TEXT</strong> 2026-07-27<br>personal experience: product tips #12</td>
+  <td>21 / 100</td>
+  <td>2.0%</td>
+  <td>Views: 41,686<br>Likes: 311<br>Replies: 165<br>Reposts: 324<br>Quotes: 35</td>
+</tr>
+<tr>
+  <td><strong>TH TH_IMAGE</strong> 2026-07-19<br>question: product tips #7</td>
+  <td>33 / 100</td>
+  <td>2.0%</td>
+  <td>Views: 41,015<br>Likes: 630<br>Replies: 4<br>Reposts: 14<br>Quotes: 162</td>
+</tr>
+</tbody></table>
+         <p class="small">Showing 8 of 16.</p>
+        </details>
+</div>
+<div class="card">
+  <div class="card-head">
+    <h3>Engagement rate <span class="small">Threads</span></h3>
+    <span class="badge b-calc">Calculated</span>
+  </div>
+  <p class="value">2.8%</p>
+  <p class="chg pos">
+    <span aria-hidden="true">▲</span><span>+18.9% vs previous 30 days</span>
+  </p>
+  
+  <details><summary>What does this mean?</summary><p class="small">The share of views that produced any interaction: a like, reply, repost or quote. Formula: (likes + replies + reposts + quotes) / views x 100. Platform data available from 2024-04-13.</p></details>
+  <details><summary>Show the 16 post(s) behind this figure</summary>
+         <p class="small">Filters: Threads &middot; 2026-07-02 to 2026-07-31</p>
+         <table>
+<thead><tr><th>Post</th><th>Index</th><th>Engagement</th><th>Native metrics</th></tr></thead>
+<tbody>
+<tr>
+  <td><strong>TH TH_VIDEO</strong> 2026-07-18<br>question: ask me anything #6</td>
+  <td>100 / 100</td>
+  <td>7.7%</td>
+  <td>Views: 4,679<br>Likes: 311<br>Replies: 6<br>Reposts: 32<br>Quotes: 13</td>
+</tr>
+<tr>
+  <td><strong>TH TH_VIDEO</strong> 2026-07-23<br>personal experience: product tips #11</td>
+  <td>94 / 100</td>
+  <td>6.9%</td>
+  <td>Views: 22,305<br>Likes: 1,452<br>Replies: 58<br>Reposts: 8<br>Quotes: 23</td>
+</tr>
+<tr>
+  <td><strong>TH TH_VIDEO</strong> 2026-07-16<br>contrarian take: customer story #3</td>
+  <td>89 / 100</td>
+  <td>6.3%</td>
+  <td>Views: 174<br>Likes: 11<br>Replies: 0<br>Reposts: 0<br>Quotes: 0</td>
+</tr>
+<tr>
+  <td><strong>TH TH_IMAGE</strong> 2026-07-31<br>personal experience: ask me anything #15</td>
+  <td>90 / 100</td>
+  <td>6.1%</td>
+  <td>Views: 36,683<br>Likes: 1,729<br>Replies: 238<br>Reposts: 270<br>Quotes: 0</td>
+</tr>
+<tr>
+  <td><strong>TH TH_IMAGE</strong> 2026-07-17<br>conclusion first: product tips #5</td>
+  <td>86 / 100</td>
+  <td>4.3%</td>
+  <td>Views: 2,100<br>Likes: 43<br>Replies: 29<br>Reposts: 10<br>Quotes: 8</td>
+</tr>
+<tr>
+  <td><strong>TH TH_TEXT</strong> 2026-07-30<br>conclusion first: product tips #14</td>
+  <td>63 / 100</td>
+  <td>3.6%</td>
+  <td>Views: 14,964<br>Likes: 385<br>Replies: 1<br>Reposts: 140<br>Quotes: 12</td>
+</tr>
+<tr>
+  <td><strong>TH TH_IMAGE</strong> 2026-07-21<br>conclusion first: product tips #9</td>
+  <td>71 / 100</td>
+  <td>3.4%</td>
+  <td>Views: 175<br>Likes: 5<br>Replies: 1<br>Reposts: 0<br>Quotes: 0</td>
+</tr>
+<tr>
+  <td><strong>TH TH_TEXT</strong> 2026-07-31<br>conclusion first: product tips #16</td>
+  <td>47 / 100</td>
+  <td>3.2%</td>
+  <td>Views: 76,545<br>Likes: 1,707<br>Replies: 327<br>Reposts: 240<br>Quotes: 145</td>
+</tr>
+</tbody></table>
+         <p class="small">Showing 8 of 16.</p>
+        </details>
+</div></div>
+<div class="card" style="margin-top:12px">
+  <p class="small"><strong>Views by day</strong> <span class="badge b-raw">From platform</span></p>
+<svg viewBox="0 0 720 170" width="100%" role="img" aria-label="Views per day">
+  <g transform="translate(46,10)">
+    <line x1="0" y1="130" x2="662" y2="130" stroke="#cbd5e1"/>
+    <text x="-8" y="10" text-anchor="end" font-size="10" fill="#64748b">113,228</text>
+    <text x="-8" y="130" text-anchor="end" font-size="10" fill="#64748b">0</text>
+    <path d="M319.6,129.8 L342.4,108.6 L365.2,124.6 L388.1,19.0" fill="none" stroke="#0369a1" stroke-width="2"/><path d="M570.7,82.1 L593.5,59.7" fill="none" stroke="#0369a1" stroke-width="2"/><path d="M639.2,112.8 L662.0,0.0" fill="none" stroke="#0369a1" stroke-width="2"/>
+    <circle cx="0.0" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="22.8" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="45.7" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="68.5" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="91.3" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="114.1" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="137.0" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="159.8" cy="101.3" r="3.2" fill="#0369a1"><title>2026-07-09: 24,957 (1 post(s))</title></circle><circle cx="182.6" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="205.4" cy="41.7" r="3.2" fill="#0369a1"><title>2026-07-11: 76,935 (1 post(s))</title></circle><circle cx="228.3" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="251.1" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="273.9" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="296.8" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="319.6" cy="129.8" r="3.2" fill="#0369a1"><title>2026-07-16: 174 (1 post(s))</title></circle><circle cx="342.4" cy="108.6" r="3.2" fill="#0369a1"><title>2026-07-17: 18,651 (2 post(s))</title></circle><circle cx="365.2" cy="124.6" r="3.2" fill="#0369a1"><title>2026-07-18: 4,679 (1 post(s))</title></circle><circle cx="388.1" cy="19.0" r="3.2" fill="#0369a1"><title>2026-07-19: 96,720 (2 post(s))</title></circle><circle cx="410.9" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="433.7" cy="129.8" r="3.2" fill="#0369a1"><title>2026-07-21: 175 (1 post(s))</title></circle><circle cx="456.6" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="479.4" cy="104.2" r="3.2" fill="#0369a1"><title>2026-07-23: 22,481 (2 post(s))</title></circle><circle cx="502.2" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="525.0" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="547.9" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="570.7" cy="82.1" r="3.2" fill="#0369a1"><title>2026-07-27: 41,686 (1 post(s))</title></circle><circle cx="593.5" cy="59.7" r="3.2" fill="#0369a1"><title>2026-07-28: 61,187 (1 post(s))</title></circle><circle cx="616.3" cy="130.0" r="2.5" fill="#fff" stroke="#94a3b8"/><circle cx="639.2" cy="112.8" r="3.2" fill="#0369a1"><title>2026-07-30: 14,964 (1 post(s))</title></circle><circle cx="662.0" cy="0.0" r="3.2" fill="#0369a1"><title>2026-07-31: 113,228 (2 post(s))</title></circle>
+    <text x="0" y="148" font-size="10" fill="#64748b">2026-07-02</text>
+    <text x="662" y="148" text-anchor="end" font-size="10" fill="#64748b">2026-07-31</text>
+  </g>
+</svg>
+<ul class="legend">
+  <li>&#9679; Published activity</li><li>&#9675; No posts that day</li><li>&#215; Outside collected data</li>
+</ul>
+  <p class="foot">16 posts, 45.7% of everything published in this period. Interaction totals are platform-native. Instagram counts saves and shares; Threads counts replies, reposts and quotes, so the two totals are shown side by side rather than summed.</p>
+  
+</div>
+
+<h2>Content ranking</h2>
+<div class="card">
+  <h3>Best performing</h3>
+  <table>
+<thead><tr><th>Post</th><th>Index</th><th>Engagement</th><th>Native metrics</th></tr></thead>
+<tbody>
+<tr>
+  <td><strong>TH TH_VIDEO</strong> 2026-07-18<br>question: ask me anything #6</td>
+  <td>100 / 100</td>
+  <td>7.7%</td>
+  <td>Views: 4,679<br>Likes: 311<br>Replies: 6<br>Reposts: 32<br>Quotes: 13</td>
+</tr>
+<tr>
+  <td><strong>TH TH_VIDEO</strong> 2026-07-23<br>personal experience: product tips #11</td>
+  <td>94 / 100</td>
+  <td>6.9%</td>
+  <td>Views: 22,305<br>Likes: 1,452<br>Replies: 58<br>Reposts: 8<br>Quotes: 23</td>
+</tr>
+<tr>
+  <td><strong>TH TH_IMAGE</strong> 2026-07-31<br>personal experience: ask me anything #15</td>
+  <td>90 / 100</td>
+  <td>6.1%</td>
+  <td>Views: 36,683<br>Likes: 1,729<br>Replies: 238<br>Reposts: 270<br>Quotes: 0</td>
+</tr>
+</tbody></table>
+</div>
+<div class="card" style="margin-top:12px">
+  <h3>Weakest performing</h3>
+  <table>
+<thead><tr><th>Post</th><th>Index</th><th>Engagement</th><th>Native metrics</th></tr></thead>
+<tbody>
+<tr>
+  <td><strong>TH TH_VIDEO</strong> 2026-07-17<br>plain information: behind the scenes #4</td>
+  <td>0 / 100</td>
+  <td>0.9%</td>
+  <td>Views: 16,551<br>Likes: 5<br>Replies: 3<br>Reposts: 93<br>Quotes: 47</td>
+</tr>
+<tr>
+  <td><strong>IG IG_REEL</strong> 2026-07-16<br>conclusion first: ask me anything #5</td>
+  <td>14 / 100</td>
+  <td>2.8%</td>
+  <td>Views: 4,654<br>Reach: 4,044<br>Likes: 82<br>Comments: 10<br>Saves: 20</td>
+</tr>
+<tr>
+  <td><strong>TH TH_VIDEO</strong> 2026-07-09<br>question: routine #1</td>
+  <td>17 / 100</td>
+  <td>1.6%</td>
+  <td>Views: 24,957<br>Likes: 55<br>Replies: 89<br>Reposts: 179<br>Quotes: 78</td>
+</tr>
+</tbody></table>
+</div>
+<p class="small">Ranked by performance index, which compares each post with others of the same type on the same account. Native metrics are shown alongside, since a high index can accompany modest absolute numbers. 2 of 35 posts are unranked: their cohort has fewer than 8 comparable posts, or their engagement rate could not be calculated.</p>
+
+<h2>AI summary</h2>
+<div class="ai">
+  <p class="small"><strong>Confidence: HIGH</strong> &middot; 35 posts, 2026-07-02 to 2026-07-31</p>
+  <p>Written analysis is generated in the background and appears here when it is ready. Confidence is calculated from the evidence base before analysis runs, so it is shown now.</p>
+  <p class="small"><strong>Why this confidence:</strong> 35 posts across 30 days, with 97% of required metrics available.</p>
+  <p class="small">No supporting posts are listed because there is no conclusion yet.</p>
+</div>
+
+<h2>Recommended next actions</h2>
+<div class="card" style="margin-top:8px">
+  <div class="card-head"><h3>Reconnect Instagram to restore reach-based rates</h3><span class="badge b-raw">Data issue</span></div>
+  <p class="muted">3 post(s) were measured against views because reach was unavailable, which is not comparable with reach-based rates elsewhere on this dashboard.</p>
+  <p class="small">Based on 3 post(s).</p>
+</div>
+
+<h2>About this file</h2>
+<p class="small">Static review harness generated by <code>scripts/render-preview.ts</code> from the same view model the
+React components consume. Drill-downs are pre-resolved into expandable sections here; in the application they open as a
+modal. Wording, metric labels, empty-state sentences and footnotes are identical.</p>
+</div>
+</body>
+</html>

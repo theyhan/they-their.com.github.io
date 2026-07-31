@@ -1,0 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Change must remain legible without colour (spec section 7), so nothing here encodes meaning in
+ * hue alone. Under forced-colours mode the glyphs and sentences still carry it.
+ */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
