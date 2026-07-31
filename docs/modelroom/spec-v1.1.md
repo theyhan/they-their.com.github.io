@@ -69,6 +69,8 @@ call twice):
 | `completed` | `SETTLE actual`, `RELEASE hold - actual` |
 | `failed` / `cancelled`, usage reported | `SETTLE partial`, `RELEASE remainder` |
 | `failed` before provider accepted | `RELEASE hold` |
+| `failed`, no usage event, no output produced | `RELEASE hold` — an explicit failure with nothing generated means no tokens were processed |
+| `failed` / `cancelled`, no usage event, output produced | `SETTLE` input estimate + streamed output, `RELEASE` remainder |
 | unreconcilable (see D2) | `SETTLE hold` (assume worst case), flag `AuditEvent` |
 
 The last row matters: an unknown outcome must be settled pessimistically, because the
@@ -159,6 +161,9 @@ stateDiagram-v2
     Conflict --> Revision: resolved
     Failed --> Assigned: retry or reassign
     Approved --> Completed
+    Planned --> Halted: budget refused at admission
+    Assigned --> Halted: budget refused at admission
+    Revision --> Halted
     Running --> Halted: budget / rounds exhausted
     Review --> Halted
     UserDecision --> Halted: decision deadline passed
@@ -176,6 +181,12 @@ stateDiagram-v2
 | `Cancelled` | yes | no | no |
 | `Conflict` | no | no | via resolution |
 | `Unknown` (run-level only) | yes | no | user decision |
+
+**`Halted` is reachable before `Running`.** Admission (D1) can refuse a run for
+budget before any provider call exists, so `Planned` and `Assigned` both need an edge
+to `Halted`. Omitting it leaves the task sitting in `Assigned` where a scheduler will
+retry it forever against an exhausted budget. *(Found by the implementation tests, not
+by review.)*
 
 **`UserDecision` deadline.** `Task.decisionDeadlineAt` (default +72h). On expiry the
 task moves to `Halted`, *not* to an auto-selected option — silently picking a model's
