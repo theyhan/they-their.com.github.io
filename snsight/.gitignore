@@ -1,0 +1,19 @@
+node_modules/
+.next/
+out/
+build/
+coverage/
+
+# Environment and credentials. Only .env.example is committed.
+.env
+.env.local
+.env.*.local
+
+# Build artifacts
+*.tsbuildinfo
+.DS_Store
+npm-debug.log*
+yarn-error.log*
+
+# Generated Prisma client
+prisma/generated/

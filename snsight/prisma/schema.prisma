@@ -1,0 +1,1092 @@
+// SNSight data model
+//
+// Implements spec section 8 plus the additions in ADR-0005.
+//
+// Three invariants are load-bearing and enforced structurally rather than by convention:
+//
+//   1. Tenant isolation (spec 10.2) - every tenant-scoped model carries workspaceId, declared
+//      non-null, and appears first in composite indexes so a query cannot be cheap without it.
+//   2. Idempotent collection (spec 10.3) - insight tables carry unique keys over their natural
+//      identity, so a redelivered job upserts instead of duplicating.
+//   3. Competitor scope (spec 3.2, ADR-0001) - competitor models declare no owner-only columns.
+//      There is no nullable `reach` or `saves` field on a competitor model to be filled in later.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum Platform {
+  INSTAGRAM
+  THREADS
+}
+
+/// Spec FR-001.
+enum WorkspaceRole {
+  OWNER
+  ADMIN
+  ANALYST
+  VIEWER
+}
+
+enum PlanTier {
+  FREE
+  PRO
+  AGENCY
+}
+
+/// ADR-0002 decision 4. Expiry is a UI state, not an error.
+enum ConnectionStatus {
+  ACTIVE
+  EXPIRING_SOON
+  EXPIRED
+  REVOKED
+  INSUFFICIENT_SCOPE
+  RATE_LIMITED
+}
+
+/// Instagram and Threads media shapes are deliberately in one enum with a platform column
+/// alongside, because spec 6.4 forbids treating them as equivalent while FR-008 needs to filter
+/// them together.
+enum MediaType {
+  IG_IMAGE
+  IG_CAROUSEL
+  IG_REEL
+  IG_STORY
+  IG_VIDEO
+  TH_TEXT
+  TH_IMAGE
+  TH_VIDEO
+  TH_CAROUSEL
+  TH_REPOST
+}
+
+/// Spec FR-005: original posts, replies and quote posts must be distinguishable.
+enum ThreadPostKind {
+  ORIGINAL
+  REPLY
+  QUOTE
+  REPOST
+}
+
+/// Spec 3.3. Every metric surfaced in the UI carries one of these.
+enum MetricLabel {
+  RAW_API_METRIC
+  CALCULATED
+  ESTIMATE
+  AI_INTERPRETATION
+}
+
+enum MetricScope {
+  ACCOUNT
+  MEDIA
+  AUDIENCE
+}
+
+/// ADR-0003 decision 4. Stored so a historical gap keeps its explanation.
+enum NotCalculableReason {
+  MISSING_DENOMINATOR
+  ZERO_DENOMINATOR
+  MISSING_NUMERATOR_INPUT
+  METRIC_NOT_AVAILABLE_IN_API_VERSION
+  METRIC_NOT_AVAILABLE_AT_SCOPE
+  SCOPE_NOT_GRANTED
+  COMPETITOR_SCOPE_FORBIDDEN
+  INSUFFICIENT_SAMPLE
+  NOT_YET_COLLECTED
+}
+
+enum SyncJobKind {
+  INITIAL_BACKFILL
+  ACCOUNT_SNAPSHOT
+  MEDIA_LIST
+  MEDIA_INSIGHTS
+  AUDIENCE_INSIGHTS
+  COMPETITOR_DISCOVERY
+  CLASSIFICATION
+  AI_ANALYSIS
+  REPORT_RENDER
+  DATA_DELETION
+}
+
+enum SyncJobStatus {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  FAILED
+  DEFERRED_RATE_LIMIT
+  CANCELLED
+}
+
+enum AnalysisKind {
+  ACCOUNT_ANALYZER
+  DASHBOARD_SUMMARY
+  CONTENT_SUCCESS_FACTORS
+  COMPETITOR_COMPARISON
+  WEEKLY_REPORT
+}
+
+/// ADR-0006 decision 3. Computed by rule, never self-reported by the model.
+enum ConfidenceLevel {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+/// ADR-0001 decision 4.
+enum CompetitorEligibility {
+  ELIGIBLE
+  TARGET_NOT_PROFESSIONAL
+  TARGET_PRIVATE
+  TARGET_NOT_FOUND
+  NO_OFFICIAL_SOURCE // Threads: registered as a reference, never measured.
+}
+
+enum AlertKind {
+  FOLLOWER_SPIKE
+  FOLLOWER_DROP
+  ENGAGEMENT_SPIKE
+  ENGAGEMENT_DROP
+  BREAKOUT_POST
+  COMPETITOR_NEW_POST
+  COMPETITOR_CAMPAIGN_BURST
+  SYNC_FAILURE
+  TOKEN_EXPIRING
+  REPORT_READY
+}
+
+enum AnalysisFeedback {
+  ACCEPTED
+  REJECTED
+  CORRECTED
+}
+
+// ---------------------------------------------------------------------------
+// Identity and tenancy (spec FR-001)
+// ---------------------------------------------------------------------------
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  name          String?
+  imageUrl      String?
+  locale        String    @default("en")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  memberships  WorkspaceMember[]
+  auditLogs    AuditLog[]
+  corrections  ClassificationCorrection[]
+  feedback     AnalysisFeedbackEntry[]
+  authAccounts AuthAccount[]
+  authSessions AuthSession[]
+  credential   UserCredential?
+
+  @@map("users")
+}
+
+// ---------------------------------------------------------------------------
+// Authentication (ADR-0008)
+//
+// Deliberately separate from `social_accounts` and `oauth_connections`. A row here proves who someone
+// is; it grants no access to Instagram or Threads data. Signing in with Facebook and connecting an
+// Instagram account for analytics are different acts with different consent, and merging them would
+// mean using a login token to read business data.
+// ---------------------------------------------------------------------------
+
+/// A third-party login identity: Google, Facebook, and so on. Never carries an insights scope.
+model AuthAccount {
+  id                String  @id @default(cuid())
+  userId            String
+  provider          String
+  providerAccountId String
+  type              String
+  /// Identity scopes only, e.g. openid, email, profile. Recorded so an audit can prove no data scope
+  /// was requested at sign-in.
+  scope             String?
+  /// Encrypted at rest like every other token (spec 10.2).
+  accessTokenCiphertext  Bytes?
+  refreshTokenCiphertext Bytes?
+  encryptionKeyId   String?
+  expiresAt         DateTime?
+  createdAt         DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("auth_accounts")
+}
+
+/// Sessions are rows, not stateless tokens, so removing a member revokes access immediately
+/// (ADR-0008 decision 1). A JWT valid for another 29 days after removal is not acceptable here.
+model AuthSession {
+  id           String   @id @default(cuid())
+  userId       String
+  /// Hash of the session token, never the token itself: a leaked database must not yield live sessions.
+  tokenHash    String   @unique
+  createdAt    DateTime @default(now())
+  /// Updated on activity, at most once every 15 minutes to avoid a write per request.
+  lastSeenAt   DateTime @default(now())
+  /// When the user last proved who they are. Re-confirming a password moves this without minting a new
+  /// session, which is what reopens the sensitive-action window (ADR-0008 decision 7).
+  authenticatedAt DateTime @default(now())
+  revokedAt    DateTime?
+  revokedReason String?
+  ipAddress    String?
+  userAgent    String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, revokedAt])
+  @@index([lastSeenAt])
+  @@map("auth_sessions")
+}
+
+/// Password credential. Separate from `users` so an account can exist with social login only, and so
+/// the hash is not fetched by every query that needs a display name.
+model UserCredential {
+  userId       String   @id
+  /// argon2id. Parameters are recorded in the encoded hash, so a cost increase can be applied lazily.
+  passwordHash String
+  /// Set when the stored parameters are weaker than current policy; rehashed on next successful sign-in.
+  needsRehash  Boolean  @default(false)
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_credentials")
+}
+
+/// Email verification and password reset. Single use, short lived, stored hashed.
+model VerificationToken {
+  id         String   @id @default(cuid())
+  identifier String
+  tokenHash  String   @unique
+  purpose    String
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime @default(now())
+
+  @@index([identifier, purpose])
+  @@map("auth_verification_tokens")
+}
+
+/// Login attempts, for throttling and for the audit trail (ADR-0008 decision 8).
+///
+/// Recorded for unknown email addresses too, because throttling must behave identically whether or not
+/// the account exists - otherwise the difference is itself an answer.
+model LoginAttempt {
+  id        String   @id @default(cuid())
+  /// Lowercased email as submitted. Not a foreign key: the point is to record attempts on addresses
+  /// that have no account.
+  email     String
+  ipAddress String?
+  userAgent String?
+  successful Boolean
+  /// UNKNOWN_EMAIL, WRONG_PASSWORD, NO_PASSWORD_SET, SUCCESS. Internal only; the response to the client
+  /// is identical in every failing case.
+  outcome   String
+  attemptedAt DateTime @default(now())
+
+  @@index([email, attemptedAt])
+  @@index([ipAddress, attemptedAt])
+  @@map("login_attempts")
+}
+
+model Workspace {
+  id             String   @id @default(cuid())
+  name           String
+  slug           String   @unique
+  planTier       PlanTier @default(FREE)
+  /// ADR-0007 decision 5. Fixture-backed workspaces are marked so synthetic numbers can never
+  /// be mistaken for real performance, including in exported PDFs.
+  isDemo         Boolean  @default(false)
+  logoUrl        String?
+  brandColorHex  String?
+  /// ADR-0005: daily quota buckets are UTC unless a workspace overrides this.
+  timezone       String   @default("UTC")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deletedAt      DateTime?
+
+  members          WorkspaceMember[]
+  socialAccounts   SocialAccount[]
+  competitorGroups CompetitorGroup[]
+  analysisRuns     AnalysisRun[]
+  recommendations  Recommendation[]
+  reports          Report[]
+  alerts           Alert[]
+  alertRules       AlertRule[]
+  syncJobs         SyncJob[]
+  auditLogs        AuditLog[]
+  usageCounters    UsageCounter[]
+  campaigns        Campaign[]
+
+  @@map("workspaces")
+}
+
+model WorkspaceMember {
+  id          String        @id @default(cuid())
+  workspaceId String
+  userId      String
+  role        WorkspaceRole
+  /// FR-001: account-level data-access permissions. Empty means all accounts in the workspace.
+  accountScope String[]     @default([])
+  invitedByUserId String?
+  invitedAt   DateTime?
+  acceptedAt  DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, userId])
+  @@index([userId])
+  @@map("workspace_members")
+}
+
+// ---------------------------------------------------------------------------
+// Connections (spec FR-002, ADR-0002)
+// ---------------------------------------------------------------------------
+
+model SocialAccount {
+  id             String   @id @default(cuid())
+  workspaceId    String
+  platform       Platform
+  /// Platform-native id. Stable across username changes, so it is the join key, not the handle.
+  platformUserId String
+  username       String
+  displayName    String?
+  biography      String?  @db.Text
+  profileImageUrl String?
+  isProfessional Boolean  @default(true)
+  /// Instagram via Facebook Login requires a linked Page (ADR-0002 decision 2).
+  linkedPageId   String?
+  connectedAt    DateTime @default(now())
+  disconnectedAt DateTime?
+  /// FR-002: on disconnect the user chooses whether history survives.
+  retainDataOnDisconnect Boolean @default(true)
+  /// FR-003: surfaced on the dashboard next to every figure.
+  lastSuccessfulSyncAt DateTime?
+  /// ADR-0007: the earliest date for which this account has data, so partial coverage is
+  /// disclosed rather than rendered as a flat line. Threads cannot precede 2024-04-13.
+  dataCoverageStartsAt DateTime?
+
+  workspace         Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  oauthConnections  OauthConnection[]
+  snapshots         AccountSnapshot[]
+  mediaPosts        MediaPost[]
+  mediaInsights     MediaInsightDaily[]
+  audienceInsights  AudienceInsightDaily[]
+  syncJobs          SyncJob[]
+
+  @@unique([workspaceId, platform, platformUserId])
+  @@index([workspaceId, platform])
+  @@map("social_accounts")
+}
+
+model OauthConnection {
+  id              String           @id @default(cuid())
+  workspaceId     String
+  socialAccountId String
+  platform        Platform
+  status          ConnectionStatus @default(ACTIVE)
+  /// Encrypted at rest (spec 10.2). The application never persists plaintext here; the column
+  /// holds ciphertext plus the id of the key that sealed it, so keys can rotate.
+  accessTokenCiphertext Bytes
+  refreshTokenCiphertext Bytes?
+  encryptionKeyId String
+  /// ADR-0002 decision 2: recorded per connection because App Review may grant a subset.
+  grantedScopes   String[]
+  tokenExpiresAt  DateTime?
+  lastRefreshedAt DateTime?
+  /// Translated, user-facing guidance (FR-002), not the raw provider string.
+  lastErrorCode   String?
+  lastErrorAt     DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  socialAccount SocialAccount @relation(fields: [socialAccountId], references: [id], onDelete: Cascade)
+
+  @@unique([socialAccountId, platform])
+  @@index([workspaceId, status])
+  @@index([tokenExpiresAt])
+  @@map("oauth_connections")
+}
+
+// ---------------------------------------------------------------------------
+// First-party collected data
+// ---------------------------------------------------------------------------
+
+/// Daily account state. Snapshots are the only source of "followers at posting time" (spec 6.1),
+/// so they are written even on days with no publishing activity.
+model AccountSnapshot {
+  id              String   @id @default(cuid())
+  workspaceId     String
+  socialAccountId String
+  capturedOn      DateTime @db.Date
+  followersCount  BigInt?
+  followsCount    BigInt?
+  mediaCount      Int?
+  /// Threads exposes account-scope clicks; Instagram does not expose an equivalent (ADR-0003).
+  accountClicks   BigInt?
+  createdAt       DateTime @default(now())
+
+  socialAccount SocialAccount @relation(fields: [socialAccountId], references: [id], onDelete: Cascade)
+
+  @@unique([socialAccountId, capturedOn])
+  @@index([workspaceId, capturedOn])
+  @@map("account_snapshots")
+}
+
+model MediaPost {
+  id              String    @id @default(cuid())
+  workspaceId     String
+  socialAccountId String
+  platform        Platform
+  platformMediaId String
+  mediaType       MediaType
+  threadKind      ThreadPostKind?
+  /// FR-005: reply-tree depth for conversation analysis.
+  parentPlatformMediaId String?
+  conversationDepth Int?
+  caption         String?   @db.Text
+  permalink       String?
+  mediaUrl        String?
+  thumbnailUrl    String?
+  /// FR-009 requires carousel navigation, so children are stored rather than flattened.
+  childMediaUrls  String[]  @default([])
+  publishedAt     DateTime
+  /// Denormalised for list and calendar views (FR-008, FR-009). Authoritative history lives in
+  /// mediaInsights; these are latest-known values.
+  likeCount       Int?
+  commentCount    Int?
+  saveCount       Int?
+  shareCount      Int?
+  replyCount      Int?
+  repostCount     Int?
+  quoteCount      Int?
+  viewCount       BigInt?
+  reachCount      BigInt?
+  /// Followers at publication, resolved from AccountSnapshot. Null when the post predates
+  /// collection, which makes follower-normalised metrics NotCalculable rather than wrong.
+  followersAtPublish BigInt?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  socialAccount   SocialAccount @relation(fields: [socialAccountId], references: [id], onDelete: Cascade)
+  insights        MediaInsightDaily[]
+  classification  ContentClassification?
+  evidence        AnalysisEvidence[]
+  campaignLinks   CampaignMedia[]
+
+  @@unique([socialAccountId, platformMediaId])
+  @@index([workspaceId, publishedAt])
+  @@index([socialAccountId, mediaType, publishedAt])
+  @@map("media_posts")
+}
+
+/// One row per metric per media per day. Long format rather than wide columns, because spec 15
+/// anticipates metrics appearing and disappearing across API versions; adding a metric must not
+/// require a migration.
+model MediaInsightDaily {
+  id              String   @id @default(cuid())
+  workspaceId     String
+  socialAccountId String
+  mediaPostId     String
+  metricKey       String
+  capturedOn      DateTime @db.Date
+  value           Decimal? @db.Decimal(20, 4)
+  /// Set when value is null. Distinguishes "zero" from "cannot be known" (spec 6.1).
+  notCalculable   NotCalculableReason?
+  /// ADR-0003 decision 3: which denominator produced a rate, so fallback values are never
+  /// silently compared against preferred ones.
+  denominatorUsed String?
+  /// Which registry version computed this, enabling FR-013's frozen formulas.
+  formulaVersion  String?
+  apiVersion      String?
+  createdAt       DateTime @default(now())
+
+  socialAccount SocialAccount @relation(fields: [socialAccountId], references: [id], onDelete: Cascade)
+  mediaPost     MediaPost     @relation(fields: [mediaPostId], references: [id], onDelete: Cascade)
+
+  @@unique([mediaPostId, metricKey, capturedOn])
+  @@index([workspaceId, capturedOn])
+  @@index([socialAccountId, metricKey, capturedOn])
+  @@map("media_insights_daily")
+}
+
+/// Audience breakdowns where the API permits them (FR-004, FR-005). Threads demographics require
+/// at least 100 followers, so absence is normal and carries a reason.
+model AudienceInsightDaily {
+  id              String   @id @default(cuid())
+  workspaceId     String
+  socialAccountId String
+  capturedOn      DateTime @db.Date
+  metricKey       String
+  /// e.g. "country", "age_bracket", "hour_of_day".
+  dimension       String
+  dimensionValue  String
+  value           Decimal? @db.Decimal(20, 4)
+  notCalculable   NotCalculableReason?
+  apiVersion      String?
+  createdAt       DateTime @default(now())
+
+  socialAccount SocialAccount @relation(fields: [socialAccountId], references: [id], onDelete: Cascade)
+
+  @@unique([socialAccountId, capturedOn, metricKey, dimension, dimensionValue])
+  @@index([workspaceId, capturedOn])
+  @@map("audience_insights_daily")
+}
+
+// ---------------------------------------------------------------------------
+// Competitors (spec FR-007, ADR-0001)
+//
+// No model below has a reach, saves, shares, profile-activity or demographic column. This is the
+// storage-level expression of spec 3.2.
+// ---------------------------------------------------------------------------
+
+model CompetitorGroup {
+  id          String   @id @default(cuid())
+  workspaceId String
+  name        String
+  /// e.g. direct competitor, reference, potential partner (FR-007).
+  kind        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  accounts  CompetitorAccount[]
+
+  @@unique([workspaceId, name])
+  @@map("competitor_groups")
+}
+
+model CompetitorAccount {
+  id             String                @id @default(cuid())
+  workspaceId    String
+  groupId        String
+  platform       Platform
+  username       String
+  platformUserId String?
+  displayName    String?
+  biography      String?               @db.Text
+  profileImageUrl String?
+  /// THREADS rows are always NO_OFFICIAL_SOURCE (ADR-0001 decision 2) and are never collected.
+  eligibility    CompetitorEligibility @default(ELIGIBLE)
+  eligibilityCheckedAt DateTime?
+  /// FR-007: per-account collection cadence.
+  collectionIntervalHours Int          @default(24)
+  /// FR-007: cumulative statistics include only data collected from this instant onward, and the
+  /// UI states it.
+  monitoringStartedAt DateTime         @default(now())
+  lastCollectedAt DateTime?
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  group            CompetitorGroup            @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  accountSnapshots CompetitorAccountSnapshot[]
+  mediaSnapshots   CompetitorMediaSnapshot[]
+
+  @@unique([workspaceId, platform, username])
+  @@index([workspaceId, groupId])
+  @@map("competitor_accounts")
+}
+
+/// Public profile counters only.
+model CompetitorAccountSnapshot {
+  id                  String   @id @default(cuid())
+  workspaceId         String
+  competitorAccountId String
+  capturedOn          DateTime @db.Date
+  followersCount      BigInt?
+  followsCount        BigInt?
+  mediaCount          Int?
+  createdAt           DateTime @default(now())
+
+  competitorAccount CompetitorAccount @relation(fields: [competitorAccountId], references: [id], onDelete: Cascade)
+
+  @@unique([competitorAccountId, capturedOn])
+  @@index([workspaceId, capturedOn])
+  @@map("competitor_account_snapshots")
+}
+
+/// Public engagement only: likes and comments. Deliberately no view, reach or save column.
+model CompetitorMediaSnapshot {
+  id                  String    @id @default(cuid())
+  workspaceId         String
+  competitorAccountId String
+  platformMediaId     String
+  mediaType           MediaType
+  caption             String?   @db.Text
+  permalink           String?
+  thumbnailUrl        String?
+  publishedAt         DateTime
+  capturedOn          DateTime  @db.Date
+  likeCount           Int?
+  commentCount        Int?
+  /// Interpolated between snapshots taken after monitoring start, hence an ESTIMATE label with
+  /// its interpolation distance disclosed (ADR-0001 decision 5).
+  estimatedFollowersAtPublish BigInt?
+  estimateGapDays     Int?
+  createdAt           DateTime  @default(now())
+
+  competitorAccount CompetitorAccount @relation(fields: [competitorAccountId], references: [id], onDelete: Cascade)
+
+  @@unique([competitorAccountId, platformMediaId, capturedOn])
+  @@index([workspaceId, publishedAt])
+  @@map("competitor_media_snapshots")
+}
+
+// ---------------------------------------------------------------------------
+// Classification (spec FR-010)
+// ---------------------------------------------------------------------------
+
+model ContentClassification {
+  id            String   @id @default(cuid())
+  workspaceId   String
+  mediaPostId   String   @unique
+  topic         String?
+  keywords      String[] @default([])
+  identityAlignment String?
+  toneOfVoice   String?
+  hookType      String?
+  ctaType       String?
+  purpose       String?
+  estimatedSeries String?
+  estimatedCampaignId String?
+  /// Model-reported, used for review queues rather than shown as fact.
+  modelConfidence Decimal? @db.Decimal(5, 4)
+  aiModelVersionId String?
+  classifiedAt  DateTime @default(now())
+  /// True once a human correction supersedes any field (ADR-0005).
+  hasCorrections Boolean @default(false)
+
+  mediaPost      MediaPost                  @relation(fields: [mediaPostId], references: [id], onDelete: Cascade)
+  aiModelVersion AiModelVersion?            @relation(fields: [aiModelVersionId], references: [id])
+  corrections    ClassificationCorrection[]
+
+  @@index([workspaceId, topic])
+  @@map("content_classifications")
+}
+
+/// ADR-0005. Corrections are appended, never applied in place, so the disagreement signal
+/// survives for later model improvement (FR-010).
+model ClassificationCorrection {
+  id               String   @id @default(cuid())
+  workspaceId      String
+  classificationId String
+  field            String
+  previousValue    String?  @db.Text
+  correctedValue   String?  @db.Text
+  correctedByUserId String
+  createdAt        DateTime @default(now())
+
+  classification ContentClassification @relation(fields: [classificationId], references: [id], onDelete: Cascade)
+  correctedBy    User                  @relation(fields: [correctedByUserId], references: [id])
+
+  @@index([workspaceId, createdAt])
+  @@index([classificationId, field])
+  @@map("classification_corrections")
+}
+
+// ---------------------------------------------------------------------------
+// AI analysis (spec FR-011, ADR-0006)
+// ---------------------------------------------------------------------------
+
+/// ADR-0005 and ADR-0006 decision 2. Referenced by every run so an old report can state exactly
+/// what produced its text.
+model AiModelVersion {
+  id            String   @id @default(cuid())
+  provider      String
+  modelId       String
+  promptVersion String
+  /// Metric registry version in force, so text and numbers are frozen together (FR-013).
+  formulaVersion String
+  activeFrom    DateTime @default(now())
+  activeTo      DateTime?
+
+  runs            AnalysisRun[]
+  classifications ContentClassification[]
+
+  @@unique([provider, modelId, promptVersion, formulaVersion])
+  @@map("ai_model_versions")
+}
+
+model AnalysisRun {
+  id          String       @id @default(cuid())
+  workspaceId String
+  kind        AnalysisKind
+  /// Either a connected account or a competitor; exactly one is set.
+  socialAccountId String?
+  competitorAccountId String?
+  /// ADR-0006 decision 5. Always displayed with the narrative.
+  windowStart DateTime
+  windowEnd   DateTime
+  postsAnalyzed Int
+  daysCovered   Int
+  /// Share of required metrics that resolved to a value rather than NotCalculable. Feeds the
+  /// confidence rubric.
+  metricCoverage Decimal   @db.Decimal(5, 4)
+  /// Computed by rule from the fields above, never requested from the model.
+  confidence  ConfidenceLevel
+  isCompetitorScope Boolean @default(false)
+  /// Deduplication: an unchanged window is not re-analysed (ADR-0006 consequences).
+  inputHash   String
+  aiModelVersionId String
+  narrative   Json?
+  startedAt   DateTime     @default(now())
+  completedAt DateTime?
+  failedReason String?
+
+  workspace       Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  aiModelVersion  AiModelVersion     @relation(fields: [aiModelVersionId], references: [id])
+  evidence        AnalysisEvidence[]
+  recommendations Recommendation[]
+  feedback        AnalysisFeedbackEntry[]
+
+  @@unique([workspaceId, kind, inputHash])
+  @@index([workspaceId, kind, completedAt])
+  @@map("analysis_runs")
+}
+
+/// ADR-0006 decision 4. A conclusion with no row here is dropped before publication, which is
+/// how spec 3.3's "show supporting posts" becomes an invariant instead of a template.
+model AnalysisEvidence {
+  id            String   @id @default(cuid())
+  workspaceId   String
+  analysisRunId String
+  /// Which claim in the narrative this supports.
+  claimKey      String
+  mediaPostId   String?
+  competitorMediaSnapshotId String?
+  /// The metric and figure that motivated the claim, so a reader can check the arithmetic.
+  metricKey     String?
+  metricValue   Decimal? @db.Decimal(20, 4)
+  note          String?  @db.Text
+
+  analysisRun AnalysisRun @relation(fields: [analysisRunId], references: [id], onDelete: Cascade)
+  mediaPost   MediaPost?  @relation(fields: [mediaPostId], references: [id], onDelete: SetNull)
+
+  @@index([analysisRunId, claimKey])
+  @@index([workspaceId])
+  @@map("analysis_evidence")
+}
+
+/// ADR-0006 decision 7. Gives section 15's required feedback control a measurable form.
+model AnalysisFeedbackEntry {
+  id            String           @id @default(cuid())
+  workspaceId   String
+  analysisRunId String
+  claimKey      String?
+  verdict       AnalysisFeedback
+  comment       String?          @db.Text
+  userId        String
+  createdAt     DateTime         @default(now())
+
+  analysisRun AnalysisRun @relation(fields: [analysisRunId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id])
+
+  @@index([analysisRunId])
+  @@map("analysis_feedback")
+}
+
+model Recommendation {
+  id            String   @id @default(cuid())
+  workspaceId   String
+  analysisRunId String?
+  /// continue | stop | test | adapt_to_threads | expand_to_instagram | next_idea (FR-011).
+  category      String
+  title         String
+  rationale     String   @db.Text
+  /// Recommended publishing time, when the recommendation is schedule-related.
+  suggestedAt   DateTime?
+  priority      Int      @default(0)
+  dismissedAt   DateTime?
+  createdAt     DateTime @default(now())
+
+  workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  analysisRun AnalysisRun? @relation(fields: [analysisRunId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId, category, createdAt])
+  @@map("recommendations")
+}
+
+// ---------------------------------------------------------------------------
+// Campaigns (spec FR-008 campaign tags)
+// ---------------------------------------------------------------------------
+
+model Campaign {
+  id          String   @id @default(cuid())
+  workspaceId String
+  name        String
+  colorHex    String?
+  startsOn    DateTime @db.Date
+  endsOn      DateTime @db.Date
+  createdAt   DateTime @default(now())
+
+  workspace Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  media     CampaignMedia[]
+
+  @@unique([workspaceId, name])
+  @@index([workspaceId, startsOn])
+  @@map("campaigns")
+}
+
+model CampaignMedia {
+  campaignId  String
+  mediaPostId String
+  /// True when membership was inferred by classification rather than set by a user (FR-010).
+  isInferred  Boolean @default(false)
+
+  campaign  Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  mediaPost MediaPost @relation(fields: [mediaPostId], references: [id], onDelete: Cascade)
+
+  @@id([campaignId, mediaPostId])
+  @@map("campaign_media")
+}
+
+// ---------------------------------------------------------------------------
+// Reports, alerts, jobs (spec FR-012, FR-013)
+// ---------------------------------------------------------------------------
+
+model Report {
+  id          String   @id @default(cuid())
+  workspaceId String
+  title       String
+  periodStart DateTime
+  periodEnd   DateTime
+  /// Which sections the user selected (FR-013).
+  sections    String[]
+  /// FR-013: the data, formulas and AI version in force at generation are frozen here, so a
+  /// reissued PDF is byte-comparable in substance.
+  formulaVersion   String
+  aiModelVersionId String?
+  frozenPayload    Json?
+  pdfStorageKey    String?
+  csvStorageKey    String?
+  generatedAt      DateTime?
+  createdAt        DateTime @default(now())
+
+  workspace  Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  shareLinks ReportShareLink[]
+
+  @@index([workspaceId, periodEnd])
+  @@map("reports")
+}
+
+/// ADR-0005. `reports` describes an artifact; a grant to view it needs its own lifecycle.
+model ReportShareLink {
+  id           String   @id @default(cuid())
+  workspaceId  String
+  reportId     String
+  token        String   @unique
+  /// Argon2id hash. Null means the link is not password-protected.
+  passwordHash String?
+  expiresAt    DateTime
+  revokedAt    DateTime?
+  accessCount  Int      @default(0)
+  lastAccessedAt DateTime?
+  createdAt    DateTime @default(now())
+
+  report Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, expiresAt])
+  @@map("report_share_links")
+}
+
+/// ADR-0005. The configured threshold, distinct from the events it fires.
+model AlertRule {
+  id          String    @id @default(cuid())
+  workspaceId String
+  kind        AlertKind
+  socialAccountId String?
+  competitorAccountId String?
+  /// Percentage change, standard deviations, or absolute count depending on kind.
+  thresholdValue Decimal? @db.Decimal(12, 4)
+  comparisonWindowDays Int @default(7)
+  /// FR-012: in-app by default, email opt-in.
+  notifyInApp Boolean   @default(true)
+  notifyEmail Boolean   @default(false)
+  isEnabled   Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  alerts    Alert[]
+
+  @@index([workspaceId, kind, isEnabled])
+  @@map("alert_rules")
+}
+
+model Alert {
+  id          String    @id @default(cuid())
+  workspaceId String
+  alertRuleId String?
+  kind        AlertKind
+  severity    String    @default("info")
+  title       String
+  body        String    @db.Text
+  /// Points at whatever triggered it, for the drill-down in FR-009.
+  subjectType String?
+  subjectId   String?
+  observedValue Decimal? @db.Decimal(20, 4)
+  firedAt     DateTime  @default(now())
+  readAt      DateTime?
+  emailSentAt DateTime?
+
+  workspace Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  alertRule AlertRule? @relation(fields: [alertRuleId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId, firedAt])
+  @@index([workspaceId, readAt])
+  @@map("alerts")
+}
+
+model SyncJob {
+  id          String        @id @default(cuid())
+  workspaceId String
+  socialAccountId String?
+  competitorAccountId String?
+  kind        SyncJobKind
+  status      SyncJobStatus @default(QUEUED)
+  /// Spec 10.3: duplicate collection is prevented by a unique key, not by hoping the queue
+  /// delivers once.
+  idempotencyKey String     @unique
+  attempts    Int           @default(0)
+  /// Exponential backoff target (spec 10.3).
+  nextAttemptAt DateTime?
+  /// Set when a rate limit defers the job, so the UI can explain the delay rather than showing
+  /// a failure.
+  rateLimitedUntil DateTime?
+  windowStart DateTime?
+  windowEnd   DateTime?
+  startedAt   DateTime?
+  finishedAt  DateTime?
+  errorCode   String?
+  errorMessage String?      @db.Text
+  createdAt   DateTime      @default(now())
+
+  workspace     Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  socialAccount SocialAccount? @relation(fields: [socialAccountId], references: [id], onDelete: Cascade)
+  payloads      RawApiPayload[]
+
+  @@index([workspaceId, status, nextAttemptAt])
+  @@index([status, nextAttemptAt])
+  @@map("sync_jobs")
+}
+
+// ---------------------------------------------------------------------------
+// Raw storage, audit, quotas, metric registry
+// ---------------------------------------------------------------------------
+
+/// ADR-0005. Section 8 requires raw responses to be access-controlled and separated from
+/// analytics tables; the body lives in object storage and this row is the pointer. Deletion
+/// procedures must remove both (spec 10.2).
+model RawApiPayload {
+  id          String   @id @default(cuid())
+  workspaceId String
+  syncJobId   String?
+  platform    Platform
+  endpoint    String
+  apiVersion  String
+  /// Hash of method plus path plus parameters, for cache and replay lookups.
+  requestFingerprint String
+  storageKey  String
+  sizeBytes   Int?
+  checksumSha256 String?
+  httpStatus  Int?
+  fetchedAt   DateTime @default(now())
+  /// Retention boundary (spec 10.2 data-retention policy).
+  purgeAfter  DateTime?
+
+  syncJob SyncJob? @relation(fields: [syncJobId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId, fetchedAt])
+  @@index([requestFingerprint])
+  @@map("raw_api_payloads")
+}
+
+/// ADR-0005. Written in the same transaction as the change it records, so a change cannot commit
+/// without its log (spec 10.2).
+model AuditLog {
+  id          String   @id @default(cuid())
+  workspaceId String?
+  actorUserId String?
+  /// e.g. member.role_changed, account.disconnected, data.deleted, report.exported,
+  /// share_link.accessed.
+  action      String
+  targetType  String?
+  targetId    String?
+  ipAddress   String?
+  userAgent   String?
+  /// Digest rather than full values, to avoid duplicating personal data into the audit trail.
+  beforeDigest String?
+  afterDigest  String?
+  createdAt   DateTime @default(now())
+
+  workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  actor     User?      @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId, createdAt])
+  @@index([action, createdAt])
+  @@map("audit_logs")
+}
+
+/// ADR-0005. Makes the section 11 plan limits enforceable. The unique key allows atomic
+/// increment-and-check in one statement.
+model UsageCounter {
+  id          String   @id @default(cuid())
+  workspaceId String
+  /// e.g. account_analysis, pdf_report, connected_accounts, competitor_accounts.
+  metric      String
+  /// UTC day, ISO week or month bucket; `lifetime` for caps that do not reset.
+  periodBucket String
+  count       Int      @default(0)
+  limitValue  Int?
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, metric, periodBucket])
+  @@map("usage_counters")
+}
+
+/// Spec 8 requires names, availability periods and formulas per API version. Seeded from
+/// src/lib/metrics/registry.ts, which is the single definition site (ADR-0003 decision 1).
+model MetricDefinition {
+  id          String      @id @default(cuid())
+  metricKey   String
+  platform    Platform?
+  scope       MetricScope
+  label       MetricLabel
+  displayName String
+  /// Shown in the mandatory metric tooltip.
+  description String      @db.Text
+  /// Human-readable formula, e.g. "(likes + comments + saves + shares) / reach x 100".
+  formula     String?
+  unit        String
+  /// Metric keys this one consumes; empty for raw API metrics.
+  requiredInputs String[] @default([])
+  /// Availability window per API version (spec 8, spec 15 mitigation).
+  apiVersionFrom String?
+  apiVersionTo   String?
+  availableFrom  DateTime?
+  availableTo    DateTime?
+  registryVersion String
+
+  @@unique([metricKey, registryVersion])
+  @@index([platform, scope])
+  @@map("metric_definitions")
+}

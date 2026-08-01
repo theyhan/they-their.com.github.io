@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SNSight - sign-in screen preview</title>
+<style>
+:root {
+  color-scheme: light;
+  --surface-page: #f4f6fa;
+  --surface-card: #ffffff;
+  --surface-sunken: #e9eef5;
+  --surface-inverse: #111a2b;
+  --text-primary: #0f1729;
+  --text-secondary: #2c3849;
+  --text-muted: #4a5769;
+  --text-on-inverse: #f7f9fc;
+  --text-on-accent: #ffffff;
+  --line-default: #808d9e;
+  --line-strong: #5b6879;
+  --line-focus: #0a539b;
+  --accent: #0a539b;
+  --accent-hover: #083f78;
+  --accent-subtle-bg: #e8f0fa;
+  --accent-subtle-text: #083f78;
+  --positive-text: #0b5133;
+  --positive-bg: #e3f3ea;
+  --negative-text: #8c1c2b;
+  --negative-bg: #fbe9ec;
+  --neutral-text: #3f4a5c;
+  --neutral-bg: #eceff4;
+  --warn-text: #6b3a05;
+  --warn-bg: #fdf3e2;
+  --warn-line: #6b3a05;
+  --info-text: #0c4a6e;
+  --info-bg: #e6f3fa;
+  --info-line: #0c4a6e;
+  --font-body: 16px;
+  --font-small: 14px;
+  --font-micro: 12.5px;
+  --badge-raw-api-metric-bg: #eaeef4;
+  --badge-raw-api-metric-text: #26313f;
+  --badge-raw-api-metric-line: #26313f;
+  --badge-calculated-bg: #e6f0fb;
+  --badge-calculated-text: #0a4a86;
+  --badge-calculated-line: #0a4a86;
+  --badge-estimate-bg: #fdf1e0;
+  --badge-estimate-text: #6b3a05;
+  --badge-estimate-line: #6b3a05;
+  --badge-ai-interpretation-bg: #f0eafb;
+  --badge-ai-interpretation-text: #4b2382;
+  --badge-ai-interpretation-line: #4b2382;
+}
+* { box-sizing: border-box; }
+body { margin:0; background:var(--surface-page); color:var(--text-secondary);
+       font:var(--font-body)/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+.nav { max-width:1000px; margin:0 auto; padding:20px 20px 0; }
+.nav a { font-size:var(--font-small); padding:8px 14px; border:1px dashed var(--line-default);
+         border-radius:999px; text-decoration:none; color:var(--text-primary);
+         background:var(--surface-card); display:inline-flex; align-items:center; min-height:40px; }
+.shell { max-width:1000px; margin:0 auto; padding:24px 20px 80px; display:grid; gap:36px; }
+@media (min-width:900px) { .shell { grid-template-columns:minmax(0,420px) minmax(0,1fr); align-items:start; } }
+.panel { background:var(--surface-card); border:1px solid var(--line-default); border-radius:12px; padding:28px 24px; }
+h1 { font-size:24px; color:var(--text-primary); margin:0 0 8px; letter-spacing:-.01em; }
+h2 { font-size:var(--font-body); text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); margin:0 0 16px; }
+h3 { font-size:17px; color:var(--text-primary); margin:0 0 4px; }
+p { margin:0 0 12px; }
+a { color:var(--accent); text-underline-offset:2px; }
+label { display:block; margin-bottom:18px; }
+.label { display:block; font-weight:600; color:var(--text-primary); }
+.hint { display:block; font-size:var(--font-small); color:var(--text-muted); margin-top:3px; }
+input { display:block; width:100%; margin-top:8px; border:1px solid var(--line-strong); border-radius:6px;
+        background:var(--surface-card); padding:11px 12px; font-size:var(--font-body); color:var(--text-primary); }
+input:disabled { background:var(--surface-sunken); }
+.btn { display:inline-flex; align-items:center; justify-content:center; width:100%; min-height:44px;
+       border:1px solid var(--accent); border-radius:6px; background:var(--accent); color:var(--text-on-accent);
+       font-size:var(--font-body); font-weight:650; }
+.alert { border:1px solid var(--warn-line); background:var(--warn-bg); color:var(--warn-text);
+         padding:12px 14px; border-radius:6px; margin-bottom:20px; }
+.info { border:1px solid var(--info-line); background:var(--info-bg); color:var(--info-text);
+        padding:14px 16px; border-radius:8px; }
+.small { font-size:var(--font-small); color:var(--text-muted); }
+.divider { border:0; border-top:1px solid var(--line-default); margin:22px 0 16px; }
+ul { margin:0 0 12px; padding-left:22px; } li { margin-bottom:10px; }
+.ok { color:var(--positive-text); font-size:var(--font-small); }
+.req { color:var(--text-muted); font-size:var(--font-small); }
+:where(a,button,input,summary,[tabindex]):focus-visible { outline:2px solid var(--line-focus); outline-offset:2px; border-radius:4px; }
+</style>
+</head>
+<body>
+<div class="nav"><a href="index.html">&larr; Overview</a></div>
+<div class="shell">
+
+  <div class="panel">
+    <p class="alert"><strong>Preview only.</strong> This page is a static rendering. The fields are
+    disabled and nothing is submitted anywhere.</p>
+
+    <h1>Sign in to SNSight</h1>
+    <p>New here? <a href="#">Create an account</a>.</p>
+
+    <form>
+      <label>
+        <span class="label">Email</span>
+        <input type="email" value="jiwon@example.com" disabled>
+      </label>
+      <label>
+        <span class="label">Password</span>
+        <input type="password" value="............" disabled>
+      </label>
+      <button class="btn" type="button" disabled>Sign in</button>
+    </form>
+
+    <p class="small" style="margin-top:14px"><a href="#">Forgotten your password?</a></p>
+    <hr class="divider">
+    <p class="small">Want to look first? <a href="dashboard-30d.html">Open the sample dashboard</a>
+    &mdash; no account needed.</p>
+  </div>
+
+  <div>
+    <h2>What SNSight does</h2>
+    <ul>
+      <li>
+        <h3>Instagram and Threads in one view</h3>
+        <p>Common metrics side by side, plus the ones only one platform reports. Figures that measure
+        different things are never added together.</p>
+      </li>
+      <li>
+        <h3>Every number is traceable</h3>
+        <p>Each metric says whether it came from the platform, was calculated, or is an estimate, and
+        every figure opens the posts behind it.</p>
+      </li>
+      <li>
+        <h3>Analysis that shows its evidence</h3>
+        <p>AI summaries cite the posts they rest on, state the period analysed, and carry a confidence
+        level calculated from how much data exists.</p>
+      </li>
+    </ul>
+
+    <p class="info"><strong>Signing in does not connect an account.</strong> Creating an SNSight account
+    is separate from granting access to your Instagram or Threads data. You will be asked for that
+    afterwards, and you can look around the sample dashboard first.</p>
+
+    <h2 style="margin-top:36px">How the real form behaves</h2>
+    <ul>
+      <li><strong>Failures are indistinguishable.</strong> An unknown email and a wrong password return
+      the same message and cost the same work, so the form cannot be used to discover which addresses
+      have accounts.</li>
+      <li><strong>Requirements are shown before submission.</strong> On the sign-up screen the password
+      rules appear as you type: <span class="req">at least 12 characters, not a common password, not
+      containing your email</span>, then <span class="ok">&#10003; meets the requirements</span>.</li>
+      <li><strong>Repeated attempts lock the account.</strong> Five failures within an hour pause
+      sign-in for 15 minutes, ten for an hour, and the message never says how many attempts remain.</li>
+      <li><strong>Sensitive actions ask again.</strong> Disconnecting an account or changing someone's
+      role requires the password within the last 15 minutes, even in an open session.</li>
+    </ul>
+    <p class="small">Every rule above is enforced by code verified in
+    <code>scripts/verify-auth.ts</code>. What is not yet verified is this markup: the application has
+    never been rendered, because its dependencies cannot be installed where it was written.</p>
+  </div>
+
+</div>
+</body>
+</html>
