@@ -1,0 +1,10 @@
+{
+  "name": "soundfit-prototype",
+  "private": true,
+  "version": "1.1.0",
+  "type": "module",
+  "description": "SoundFit MVP prototype: browser-only personalized song studio used to validate the PRD before a music API is contracted.",
+  "scripts": {
+    "test": "node tests/logic.test.mjs"
+  }
+}

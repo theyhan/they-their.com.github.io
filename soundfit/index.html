@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SoundFit — 당신의 이야기로 만드는 선물 노래</title>
+<meta name="description" content="이야기와 감정을 알려주면 가사와 두 가지 버전의 곡을 만들고, 원하는 구간만 고쳐서 라이선스와 함께 받아가는 개인화 음악 스튜디오.">
+<link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap inner">
+    <a class="brand" href="index.html">Sound<span>Fit</span></a>
+    <span class="badge badge-warn" title="브라우저에서 직접 소리를 합성하는 검증용 프로토타입입니다.">프로토타입</span>
+    <nav class="topnav">
+      <a href="#how">진행 방식</a>
+      <a href="#rights">권리 · 안전</a>
+      <a href="dna.html">Music DNA</a>
+      <a href="studio.html">시작하기</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="wrap hero">
+    <h1>이야기를 들려주면,<br>그 사람을 위한 노래를 만듭니다.</h1>
+    <p class="lede">
+      장르나 템포를 몰라도 됩니다. 누구를 위한 곡인지, 어떤 기억을 담고 싶은지,
+      어떤 감정을 전하고 싶은지만 알려주세요. 가사부터 두 가지 버전의 곡까지 만들고,
+      마음에 걸리는 부분만 골라 고칠 수 있습니다.
+    </p>
+    <div class="cta">
+      <a class="btn btn-primary btn-lg" href="studio.html">선물 노래 만들기</a>
+      <button class="btn btn-lg" id="demoBtn">예시 30초 들어보기</button>
+      <span class="small dim" id="demoStatus"></span>
+    </div>
+    <div class="flowline">
+      <span>이야기</span><span>가사</span><span>두 버전</span><span>구간 수정</span><span>라이선스</span><span>다운로드</span>
+    </div>
+  </section>
+
+  <section class="wrap" id="how" style="padding-bottom:40px">
+    <h2>진행 방식</h2>
+    <div class="grid-3">
+      <div class="feature">
+        <h3>1. 이야기 인터뷰</h3>
+        <p>누구에게, 어떤 기억을, 어떤 감정으로. 답변은 구조화된 스토리 요약으로 정리되고, 당신이 승인한 다음에만 가사로 넘어갑니다.</p>
+      </div>
+      <div class="feature">
+        <h3>2. 가사 승인</h3>
+        <p>한 줄씩 고치고, 마음에 든 줄은 잠글 수 있습니다. 잠근 줄은 이후 어떤 재생성에서도 바뀌지 않습니다.</p>
+      </div>
+      <div class="feature">
+        <h3>3. 두 버전 비교</h3>
+        <p>같은 가사·같은 씨드에서 정해진 두 개의 축만 다르게 만듭니다. 그래서 “무엇이 어떻게 다른지” 말로 설명해 드립니다.</p>
+      </div>
+      <div class="feature">
+        <h3>4. 구간만 수정</h3>
+        <p>“후렴을 더 힘있게”, “드럼을 줄여줘”. 곡 전체를 다시 만들지 않고 바뀐 구간만 다시 렌더링합니다. 몇 개를 다시 만들었는지 그대로 보여드립니다.</p>
+      </div>
+      <div class="feature">
+        <h3>5. 권리 확인</h3>
+        <p>받기 전에 사용 가능한 범위, 금지된 사용, 수익화 여부, 보컬 관련 제한을 먼저 보여드립니다.</p>
+      </div>
+      <div class="feature">
+        <h3>6. 파일과 기록</h3>
+        <p>마스터 WAV, 동기화 가사, 가사 카드, 라이선스 영수증, 그리고 모델·씨드·수정 이력이 담긴 생성 기록까지 함께 받습니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap" id="rights" style="padding-bottom:40px">
+    <h2>권리와 안전에 대해 분명히 말합니다</h2>
+    <div class="grid-2">
+      <div class="panel stack">
+        <div>
+          <h3 style="font-size:16px">하지 않는 것</h3>
+          <ul class="muted small">
+            <li>특정 인물(연예인 · 공인 · 고인 포함)의 목소리를 복제하지 않습니다.</li>
+            <li>기존 곡을 그대로 재현하는 요청은 처리하지 않습니다.</li>
+            <li>완전 AI 생성물의 저작권이 어느 나라에서나 인정된다고 약속하지 않습니다.</li>
+            <li>“누구처럼 들리게” 만들어 준다고 약속하지 않습니다. 대신 템포 · 악기 · 시대감 · 정서 같은 음악적 속성으로 바꿔 반영합니다.</li>
+          </ul>
+        </div>
+        <div>
+          <h3 style="font-size:16px">하는 것</h3>
+          <ul class="muted small">
+            <li>모든 결과물에 AI 생성 고지와 생성 기록(모델 · 씨드 · 수정 이력)을 붙입니다.</li>
+            <li>유사도 검사를 거치고, 높으면 격리 후 재생성합니다.</li>
+            <li>가사 작성 · 수정 · 잠금 · 편곡 선택 등 사람의 기여를 별도로 기록합니다.</li>
+            <li>선물 프로젝트는 기본 비공개이고, 언제든 삭제할 수 있습니다.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="panel stack">
+        <div class="panel-h">이 프로토타입의 한계</div>
+        <p class="small muted">
+          이 페이지의 소리는 브라우저의 Web Audio로 직접 합성한 것입니다. 상용 음악 생성 API를 쓰지 않았고,
+          보컬은 실제 사람의 노래가 아니라 합성 <strong>가이드 보컬</strong>입니다.
+          목적은 “음악이 얼마나 좋은지”가 아니라, <strong>제품 흐름 · 권리 통제 · 구간 단위 수정 · 비용 계측이 실제로 성립하는지</strong>를
+          프로바이더 계약 전에 검증하는 것입니다.
+        </p>
+        <ul class="small muted">
+          <li>가사는 언어 모델이 아니라 템플릿 엔진이 씁니다 (교체 가능한 어댑터 구조).</li>
+          <li>유사도 검사는 멜로디 기반 상징적 검사입니다. 실제 서비스는 라이선스된 카탈로그 대상 오디오 지문이 필요합니다.</li>
+          <li>결제는 시뮬레이션이며, 데이터는 이 브라우저에만 저장됩니다.</li>
+          <li>MP3 인코딩은 일부러 넣지 않았습니다. 배포 포맷은 프로바이더가 실제 지원하는 것만 제공해야 합니다.</li>
+        </ul>
+        <p class="small"><a href="docs/SPEC-v1.1-delta.md">스펙 v1.1 변경 사항 보기 →</a></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap" style="padding-bottom:60px">
+    <h2>어떤 순간을 위한 곡인가요?</h2>
+    <div class="opt-grid" id="occasionGrid"></div>
+  </section>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <div class="spread">
+      <div>
+        <strong>SoundFit</strong> — 개인화 AI 음악 스튜디오 프로토타입
+        <div class="tiny dim" style="margin-top:6px">
+          이 사이트의 모든 오디오는 AI/알고리즘으로 생성되었습니다. 실제 인물의 목소리를 복제하지 않았습니다.
+        </div>
+      </div>
+      <div class="tiny dim">v1.1 · 2026-08</div>
+    </div>
+  </div>
+</footer>
+
+<script type="module" src="assets/js/landing.js"></script>
+</body>
+</html>

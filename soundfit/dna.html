@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Music DNA — SoundFit</title>
+<meta name="description" content="내 취향 프로필을 확인하고 고치고 초기화하는 대시보드. 추론된 항목은 확신도와 근거 신호까지 보여줍니다.">
+<link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap inner">
+    <a class="brand" href="index.html">Sound<span>Fit</span></a>
+    <span class="badge badge-warn">프로토타입</span>
+    <nav class="topnav">
+      <a href="studio.html">스튜디오</a>
+      <a href="index.html#rights">권리 · 안전</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap" style="padding:26px 22px 80px">
+  <h1 style="font-size:26px">Music DNA</h1>
+  <p class="muted">직접 고른 값과 행동에서 추론한 값을 구분해서 보여줍니다. 추론은 확신도와 근거 신호를 함께 표시하고, 직접 고른 값을 덮어쓰지 않습니다.</p>
+  <div id="dnaBody" class="stack" style="margin-top:20px"></div>
+</main>
+
+<script type="module" src="assets/js/dna-page.js"></script>
+</body>
+</html>

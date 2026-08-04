@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SoundFit 스튜디오 — 이야기로 만드는 선물 노래</title>
+<meta name="description" content="이야기를 입력하면 가사와 두 가지 버전의 곡을 만들고, 원하는 구간만 수정해 라이선스와 함께 받아가는 개인화 음악 스튜디오 프로토타입.">
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap inner">
+    <a class="brand" href="index.html">Sound<span>Fit</span></a>
+    <span class="badge badge-warn" title="브라우저에서 직접 소리를 합성하는 검증용 프로토타입입니다.">프로토타입</span>
+    <nav class="topnav">
+      <a href="dna.html">Music DNA</a>
+      <a href="index.html#rights">권리 · 안전</a>
+      <a href="docs/SPEC-v1.1-delta.md">스펙 v1.1 (md)</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap studio">
+  <nav class="steps panel panel-tight" aria-label="진행 단계">
+    <ol id="stepList"></ol>
+    <div class="tiny dim" style="margin-top:12px;padding:0 11px 4px">
+      진행 상황은 이 브라우저에만 저장됩니다.
+    </div>
+  </nav>
+
+  <section id="stepBody" aria-live="polite"></section>
+</main>
+
+<script type="module" src="assets/js/studio.js"></script>
+</body>
+</html>
